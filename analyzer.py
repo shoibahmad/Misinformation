@@ -20,7 +20,7 @@ class MisinformationAnalyzer:
         """Initialize the analyzer with API configurations"""
         # API Keys - Replace with your actual keys
         self.newsapi_key = os.getenv('NEWSAPI_KEY', '1aef5e04e84643a889ba8e0f377e196b')
-        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', '762058044918-tnbjhq31tr0g234luo17l0q1du0mo3s6.apps.googleusercontent.com')  # Use proper Google Cloud API key
+        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyBY1HIARwAN_6Rxu8Ww-sQ0hn87L6wOUIw')  # Use proper Google Cloud API key
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyDMbXrwaTcFOB2b5ePT2o1EGq5OCmsIFQY')
         
         # Configure Google Gemini
@@ -317,8 +317,18 @@ class MisinformationAnalyzer:
     async def _check_facts_api(self, text: str) -> Dict[str, Any]:
         """Check facts using Google Fact Check Tools API"""
         try:
-            if self.factcheck_api_key == 'YOUR_FACTCHECK_API_KEY_HERE':
-                return {'status': 'API key not configured', 'claims': []}
+            # Check if API key is properly configured
+            if (not self.factcheck_api_key or 
+                self.factcheck_api_key == 'YOUR_FACTCHECK_API_KEY_HERE' or
+                self.factcheck_api_key.strip() == '' or
+                '.apps.googleusercontent.com' in self.factcheck_api_key):
+                return {
+                    'status': 'API key not configured', 
+                    'claims_found': 0,
+                    'claims': [],
+                    'has_fact_checks': False,
+                    'message': 'Google Fact Check Tools API key not properly configured'
+                }
             
             url = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
             params = {
@@ -338,16 +348,53 @@ class MisinformationAnalyzer:
                             'claims': claims[:3],  # Return top 3 claims
                             'has_fact_checks': len(claims) > 0
                         }
+                    elif response.status == 400:
+                        return {
+                            'status': 'error', 
+                            'message': 'Invalid API key or request format',
+                            'claims_found': 0,
+                            'claims': [],
+                            'has_fact_checks': False
+                        }
+                    elif response.status == 403:
+                        return {
+                            'status': 'error', 
+                            'message': 'API key lacks permission or quota exceeded',
+                            'claims_found': 0,
+                            'claims': [],
+                            'has_fact_checks': False
+                        }
                     else:
-                        return {'status': 'error', 'message': f'API returned {response.status}'}
+                        return {
+                            'status': 'error', 
+                            'message': f'API returned status {response.status}',
+                            'claims_found': 0,
+                            'claims': [],
+                            'has_fact_checks': False
+                        }
         except Exception as e:
-            return {'status': 'error', 'message': str(e)}
+            return {
+                'status': 'error', 
+                'message': f'Fact check API error: {str(e)}',
+                'claims_found': 0,
+                'claims': [],
+                'has_fact_checks': False
+            }
 
     async def _verify_with_news_apis(self, text: str) -> Dict[str, Any]:
         """Verify information using NewsAPI"""
         try:
-            if self.newsapi_key == 'YOUR_NEWSAPI_KEY_HERE':
-                return {'status': 'API key not configured', 'articles': []}
+            if (not self.newsapi_key or 
+                self.newsapi_key == 'YOUR_NEWSAPI_KEY_HERE' or
+                self.newsapi_key.strip() == ''):
+                return {
+                    'status': 'API key not configured', 
+                    'total_articles': 0,
+                    'reliable_sources': 0,
+                    'reliability_ratio': 0,
+                    'top_articles': [],
+                    'message': 'NewsAPI key not configured'
+                }
             
             # Extract key terms for search
             words = text.split()[:10]  # Use first 10 words
@@ -382,10 +429,42 @@ class MisinformationAnalyzer:
                             'reliability_ratio': reliable_count / len(articles) if articles else 0,
                             'top_articles': articles[:3]
                         }
+                    elif response.status == 401:
+                        return {
+                            'status': 'error', 
+                            'message': 'Invalid NewsAPI key',
+                            'total_articles': 0,
+                            'reliable_sources': 0,
+                            'reliability_ratio': 0,
+                            'top_articles': []
+                        }
+                    elif response.status == 429:
+                        return {
+                            'status': 'error', 
+                            'message': 'NewsAPI rate limit exceeded',
+                            'total_articles': 0,
+                            'reliable_sources': 0,
+                            'reliability_ratio': 0,
+                            'top_articles': []
+                        }
                     else:
-                        return {'status': 'error', 'message': f'NewsAPI returned {response.status}'}
+                        return {
+                            'status': 'error', 
+                            'message': f'NewsAPI returned status {response.status}',
+                            'total_articles': 0,
+                            'reliable_sources': 0,
+                            'reliability_ratio': 0,
+                            'top_articles': []
+                        }
         except Exception as e:
-            return {'status': 'error', 'message': str(e)}
+            return {
+                'status': 'error', 
+                'message': f'NewsAPI error: {str(e)}',
+                'total_articles': 0,
+                'reliable_sources': 0,
+                'reliability_ratio': 0,
+                'top_articles': []
+            }
 
     def _calculate_misinformation_score(self, linguistic, sentiment, factcheck, news, gemini=None) -> float:
         """Calculate overall misinformation score (0-1, higher = more likely misinformation)"""
