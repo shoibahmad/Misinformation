@@ -33,15 +33,15 @@ A comprehensive AI-powered tool for detecting misinformation, fake news, and dee
 ### Prerequisites
 - Python 3.8+
 - Google Gemini API Key
-- NewsAPI Key (optional)
-- Google Cloud API Key for Fact Check Tools (optional)
+- NewsAPI Key 
+- Google Cloud API Key for Fact Check Tools 
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/ai-misinformation-detector.git
-   cd ai-misinformation-detector
+   git clone https://github.com/shoibahmad/Misinformation.git
+   cd Misinformation
    ```
 
 2. **Install dependencies**
@@ -195,9 +195,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: support@yourproject.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/ai-misinformation-detector/issues)
-- 📖 Documentation: [Wiki](https://github.com/yourusername/ai-misinformation-detector/wiki)
+- 📧 Email: shoibsahmad@gmail.com
+- 🐛 Issues: [GitHub Issues](https://github.com/shoibahmad/Misinformation/issues)
+- 📖 Documentation: [Wiki](https://github.com/yourusername/Misinformation/wiki)
 
 ## 🔮 Roadmap
 
