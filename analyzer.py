@@ -20,15 +20,14 @@ class MisinformationAnalyzer:
         """Initialize the analyzer with API configurations"""
         # API Keys - Replace with your actual keys
         self.newsapi_key = os.getenv('NEWSAPI_KEY', '1aef5e04e84643a889ba8e0f377e196b')
-        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'YOUR_FACTCHECK_API_KEY_HERE')  # Use proper Google Cloud API key
+        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', '762058044918-tnbjhq31tr0g234luo17l0q1du0mo3s6.apps.googleusercontent.com')  # Use proper Google Cloud API key
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyDMbXrwaTcFOB2b5ePT2o1EGq5OCmsIFQY')
         
         # Configure Google Gemini
-        if self.gemini_api_key != 'AIzaSyDMbXrwaTcFOB2b5ePT2o1EGq5OCmsIFQY':
+        if self.gemini_api_key and len(self.gemini_api_key) > 20:
             try:
                 genai.configure(api_key=self.gemini_api_key)
                 
-                # List available models for debugging
                 try:
                     models = genai.list_models()
                     available_models = [model.name for model in models]
@@ -64,7 +63,7 @@ class MisinformationAnalyzer:
                 self.gemini_model = None
         else:
             self.gemini_model = None
-            print("ℹ️ Google Gemini Pro not configured - using basic analysis mode")
+            print("ℹ️ Google Gemini API key not configured - using basic analysis mode")
             
         # Fake news detection patterns
         self.suspicious_patterns = [
@@ -222,24 +221,41 @@ class MisinformationAnalyzer:
                 return {'status': 'not_available', 'analysis': 'Gemini not configured'}
             
             prompt = f"""
-            As an expert fact-checker and misinformation analyst, analyze the following text and provide a definitive assessment:
+            As an expert fact-checker and misinformation analyst with extensive experience in detecting fake news, propaganda, and misleading information, analyze the following text comprehensively:
 
-            Text: "{text}"
+            TEXT TO ANALYZE: "{text}"
 
-            Please provide:
-            1. VERDICT: Is this content FAKE NEWS, MODERATELY FAKE, or LEGITIMATE? (Choose one)
-            2. CONFIDENCE LEVEL: How confident are you in this assessment? (0-100%)
-            3. KEY INDICATORS: What specific elements led to your conclusion?
-            4. FACT-CHECK ANALYSIS:
-               - Verifiable claims vs unsubstantiated assertions
-               - Emotional manipulation tactics
-               - Source credibility signals
-               - Logical consistency
-               - Bias indicators
-            5. RED FLAGS: List any misinformation patterns detected
-            6. RECOMMENDATIONS: What should readers do with this information?
+            Provide a detailed analysis with the following sections:
 
-            Format your response clearly with these sections. Be decisive in your verdict - avoid ambiguous language.
+            🎯 VERDICT: [Choose ONE - FAKE NEWS / MODERATELY FAKE / LEGITIMATE]
+
+            📊 CONFIDENCE LEVEL: [0-100%] - How certain are you of this assessment?
+
+            🔍 KEY INDICATORS:
+            - List 3-5 specific elements that led to your conclusion
+            - Include linguistic patterns, factual claims, emotional language, etc.
+
+            📋 DETAILED FACT-CHECK ANALYSIS:
+            • VERIFIABLE CLAIMS: What can be fact-checked?
+            • UNSUBSTANTIATED ASSERTIONS: What lacks evidence?
+            • EMOTIONAL MANIPULATION: Identify bias and emotional triggers
+            • SOURCE CREDIBILITY: Assess reliability indicators
+            • LOGICAL CONSISTENCY: Check for contradictions or fallacies
+            • BIAS INDICATORS: Political, commercial, or ideological bias
+
+            🚩 RED FLAGS DETECTED:
+            - List specific misinformation patterns found
+            - Include propaganda techniques, logical fallacies, etc.
+
+            💡 RECOMMENDATIONS:
+            - Specific actions readers should take
+            - How to verify the information
+            - Whether to share or avoid sharing
+
+            🎓 EXPERT REASONING:
+            Explain your analytical process and why you reached this conclusion.
+
+            Be thorough, decisive, and provide actionable insights. Use clear, professional language.
             """
             
             response = await asyncio.to_thread(
@@ -550,15 +566,45 @@ class MisinformationAnalyzer:
             
             # Gemini Pro Vision analysis
             prompt = """
-            Analyze this image for signs of manipulation, deepfakes, or misinformation:
-            
-            1. Look for visual inconsistencies (lighting, shadows, reflections)
-            2. Check for unnatural facial features or expressions
-            3. Examine image quality and compression artifacts
-            4. Identify any signs of digital manipulation
-            5. Assess overall authenticity
-            
-            Provide a detailed analysis with a confidence score (0-100) for authenticity.
+            As an expert digital forensics analyst specializing in deepfake detection and image manipulation, provide a comprehensive analysis of this image:
+
+            🔍 VISUAL FORENSICS ANALYSIS:
+
+            1. 🎭 DEEPFAKE INDICATORS:
+               - Facial inconsistencies (eyes, mouth, skin texture)
+               - Unnatural expressions or micro-expressions
+               - Temporal inconsistencies in video frames
+               - Blending artifacts around face boundaries
+
+            2. 💡 LIGHTING & SHADOWS:
+               - Light source consistency across the image
+               - Shadow direction and intensity
+               - Reflection accuracy in eyes and surfaces
+               - Color temperature consistency
+
+            3. 🖼️ TECHNICAL ANALYSIS:
+               - Compression artifacts and quality inconsistencies
+               - Resolution mismatches between different parts
+               - Noise patterns and grain consistency
+               - Edge detection anomalies
+
+            4. 🎨 DIGITAL MANIPULATION SIGNS:
+               - Clone stamp or healing brush artifacts
+               - Warping or morphing distortions
+               - Color grading inconsistencies
+               - Metadata anomalies
+
+            🎯 AUTHENTICITY VERDICT: [AUTHENTIC / LIKELY MANIPULATED / DEFINITELY FAKE]
+
+            📊 CONFIDENCE SCORE: [0-100%] - How certain are you?
+
+            🚩 SPECIFIC RED FLAGS: List any manipulation indicators found
+
+            💡 EXPERT REASONING: Explain your analytical process and conclusion
+
+            🔧 TECHNICAL DETAILS: Include any forensic evidence or technical observations
+
+            Provide a thorough, professional analysis with specific evidence for your conclusions.
             """
             
             print("🔍 Running Gemini analysis...")

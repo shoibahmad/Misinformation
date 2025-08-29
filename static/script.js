@@ -454,23 +454,68 @@ function displayImageResults(result) {
     // Analysis details
     let analysisHTML = '';
     
+    // Gemini AI Analysis - Prominent Display (same as text analysis)
     if (result.ai_analysis) {
+        const riskClass = getVerdictClass(result.deepfake_risk);
+        
         analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Image Analysis</h4>
-                <div class="ai-analysis-text">
-                    ${result.ai_analysis.replace(/\n/g, '<br>')}
+            <div class="analysis-section gemini-section">
+                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
+                
+                <div class="verdict-card">
+                    <div class="verdict-header">
+                        <h5><i class="fas fa-gavel"></i> AI Verdict</h5>
+                    </div>
+                    <div class="verdict-content">
+                        <div class="verdict-badge ${riskClass}">
+                            ${result.deepfake_risk ? result.deepfake_risk.toUpperCase() + ' RISK' : 'UNKNOWN'}
+                        </div>
+                        <div class="confidence-meter">
+                            <span class="confidence-label">Analysis: Complete</span>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: 90%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span>AI Risk Level:</span>
+                        <span class="badge ${result.deepfake_risk}">${result.deepfake_risk}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Analysis Status:</span>
+                        <span class="badge success">Complete</span>
+                    </div>
+                </div>
+                
+                <div class="ai-detailed-analysis">
+                    <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
+                    <div class="ai-analysis-text">
+                        ${result.ai_analysis.replace(/\n/g, '<br>')}
+                    </div>
                 </div>
             </div>
         `;
-    }
-    
-    // Show Gemini status if not available
-    if (result.status === 'basic_analysis') {
+    } else if (result.status === 'basic_analysis') {
         analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Analysis</h4>
-                <p class="info-message">🔧 Gemini AI not configured. Configure GEMINI_API_KEY for advanced AI-powered deepfake detection using Google Gemini Pro Vision.</p>
+            <div class="analysis-section gemini-section">
+                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
+                <div class="info-message">
+                    <i class="fas fa-cog"></i> <strong>Configuration Required</strong><br>
+                    Configure GEMINI_API_KEY to enable advanced AI-powered deepfake detection using Google Gemini Pro Vision with expert-level analysis and definitive verdicts.
+                </div>
+            </div>
+        `;
+    } else if (result.status === 'error') {
+        analysisHTML += `
+            <div class="analysis-section gemini-section">
+                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Analysis Failed</strong><br>
+                    ${result.message || 'Unknown error occurred'}
+                </div>
             </div>
         `;
     }
@@ -599,28 +644,69 @@ function displayVideoResults(result) {
         `;
     }
     
-    // Gemini AI Analysis for Video
+    // Gemini AI Analysis for Video - Prominent Display
     if (result.gemini_analysis && result.gemini_analysis.status === 'success') {
         const gemini = result.gemini_analysis;
+        const verdictClass = getVerdictClass(gemini.risk_level);
+        
         analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Video Analysis</h4>
+            <div class="analysis-section gemini-section">
+                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
+                
+                <div class="verdict-card">
+                    <div class="verdict-header">
+                        <h5><i class="fas fa-gavel"></i> AI Verdict</h5>
+                    </div>
+                    <div class="verdict-content">
+                        <div class="verdict-badge ${verdictClass}">
+                            ${gemini.risk_level ? gemini.risk_level.toUpperCase() + ' RISK' : 'UNKNOWN'}
+                        </div>
+                        <div class="confidence-meter">
+                            <span class="confidence-label">Video Analysis: Complete</span>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="analysis-grid">
                     <div class="analysis-item">
                         <span>AI Risk Assessment:</span>
                         <span class="badge ${gemini.risk_level}">${gemini.risk_level}</span>
                     </div>
+                    <div class="analysis-item">
+                        <span>Analysis Status:</span>
+                        <span class="badge success">Complete</span>
+                    </div>
                 </div>
-                <div class="ai-analysis-text">
-                    ${gemini.analysis.replace(/\n/g, '<br>')}
+                
+                <div class="ai-detailed-analysis">
+                    <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
+                    <div class="ai-analysis-text">
+                        ${gemini.analysis.replace(/\n/g, '<br>')}
+                    </div>
                 </div>
             </div>
         `;
     } else if (result.gemini_analysis && result.gemini_analysis.status === 'not_available') {
         analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Analysis</h4>
-                <p class="info-message">🔧 Gemini AI not configured. Configure GEMINI_API_KEY for advanced AI-powered deepfake detection.</p>
+            <div class="analysis-section gemini-section">
+                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
+                <div class="info-message">
+                    <i class="fas fa-cog"></i> <strong>Configuration Required</strong><br>
+                    Configure GEMINI_API_KEY to enable advanced AI-powered deepfake detection with expert-level video analysis and definitive verdicts.
+                </div>
+            </div>
+        `;
+    } else if (result.gemini_analysis && result.gemini_analysis.status === 'error') {
+        analysisHTML += `
+            <div class="analysis-section gemini-section">
+                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Analysis Failed</strong><br>
+                    ${result.gemini_analysis.analysis}
+                </div>
             </div>
         `;
     }
@@ -756,16 +842,19 @@ function getDeepfakeRiskLevel(risk) {
 function getVerdictClass(verdict) {
     if (!verdict) return 'verdict-unknown';
     
-    switch (verdict.toUpperCase()) {
-        case 'FAKE NEWS':
-            return 'verdict-fake';
-        case 'MODERATELY FAKE':
-            return 'verdict-moderate';
-        case 'LEGITIMATE':
-            return 'verdict-legitimate';
-        default:
-            return 'verdict-unknown';
-    }
+    const verdictUpper = verdict.toUpperCase();
+    
+    // Handle fake news verdicts
+    if (verdictUpper === 'FAKE NEWS') return 'verdict-fake';
+    if (verdictUpper === 'MODERATELY FAKE') return 'verdict-moderate';
+    if (verdictUpper === 'LEGITIMATE') return 'verdict-legitimate';
+    
+    // Handle risk levels for images/videos
+    if (verdictUpper === 'HIGH' || verdictUpper === 'HIGH RISK') return 'verdict-fake';
+    if (verdictUpper === 'MEDIUM' || verdictUpper === 'MODERATE' || verdictUpper === 'MEDIUM RISK') return 'verdict-moderate';
+    if (verdictUpper === 'LOW' || verdictUpper === 'LOW RISK') return 'verdict-legitimate';
+    
+    return 'verdict-unknown';
 }
 
 // UI state management
