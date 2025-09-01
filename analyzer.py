@@ -645,45 +645,45 @@ class MisinformationAnalyzer:
             
             # Gemini Pro Vision analysis
             prompt = """
-            As an expert digital forensics analyst specializing in deepfake detection and image manipulation, provide a comprehensive analysis of this image:
+            As an expert digital forensics analyst, analyze this image for authenticity. Be conservative and accurate in your assessment.
 
-            🔍 VISUAL FORENSICS ANALYSIS:
+            IMPORTANT: Most real photos should be classified as AUTHENTIC unless there are clear, obvious signs of manipulation.
 
-            1. 🎭 DEEPFAKE INDICATORS:
-               - Facial inconsistencies (eyes, mouth, skin texture)
-               - Unnatural expressions or micro-expressions
-               - Temporal inconsistencies in video frames
-               - Blending artifacts around face boundaries
+            🔍 ANALYSIS CHECKLIST:
 
-            2. 💡 LIGHTING & SHADOWS:
-               - Light source consistency across the image
-               - Shadow direction and intensity
-               - Reflection accuracy in eyes and surfaces
-               - Color temperature consistency
+            1. 🎭 FACIAL ANALYSIS (if faces present):
+               - Are facial features naturally proportioned?
+               - Do eyes, mouth, and expressions look natural?
+               - Is skin texture consistent and realistic?
+               - Are there any obvious blending artifacts?
 
-            3. 🖼️ TECHNICAL ANALYSIS:
-               - Compression artifacts and quality inconsistencies
-               - Resolution mismatches between different parts
-               - Noise patterns and grain consistency
-               - Edge detection anomalies
+            2. 💡 LIGHTING & CONSISTENCY:
+               - Is lighting consistent across the entire image?
+               - Do shadows match the apparent light sources?
+               - Are reflections in eyes/surfaces accurate?
 
-            4. 🎨 DIGITAL MANIPULATION SIGNS:
-               - Clone stamp or healing brush artifacts
-               - Warping or morphing distortions
-               - Color grading inconsistencies
-               - Metadata anomalies
+            3. 🖼️ TECHNICAL QUALITY:
+               - Does image quality look consistent throughout?
+               - Are there obvious compression or editing artifacts?
+               - Does the resolution appear uniform?
 
-            🎯 AUTHENTICITY VERDICT: [AUTHENTIC / LIKELY MANIPULATED / DEFINITELY FAKE]
+            4. 🎨 MANIPULATION INDICATORS:
+               - Any obvious clone/copy-paste artifacts?
+               - Unnatural color transitions or gradients?
+               - Visible editing tool marks?
 
-            📊 CONFIDENCE SCORE: [0-100%] - How certain are you?
+            🎯 AUTHENTICITY VERDICT: Choose ONE based on evidence:
+            - AUTHENTIC: No clear signs of manipulation (default for normal photos)
+            - LIKELY MANIPULATED: Some suspicious indicators but not definitive
+            - DEFINITELY FAKE: Clear, obvious manipulation evidence
 
-            🚩 SPECIFIC RED FLAGS: List any manipulation indicators found
+            📊 CONFIDENCE: [0-100%] - Only high confidence if you see clear evidence
 
-            💡 EXPERT REASONING: Explain your analytical process and conclusion
+            🚩 EVIDENCE: List ONLY specific manipulation indicators you can clearly identify
 
-            🔧 TECHNICAL DETAILS: Include any forensic evidence or technical observations
+            💡 REASONING: Explain why you reached this conclusion with specific evidence
 
-            Provide a thorough, professional analysis with specific evidence for your conclusions.
+            Be conservative - err on the side of authenticity unless manipulation is obvious.
             """
             
             print("🔍 Running Gemini analysis...")
@@ -783,62 +783,74 @@ class MisinformationAnalyzer:
             return {'error': str(e)}
 
     def _calculate_deepfake_risk(self, ai_analysis: str, technical_analysis: Dict) -> str:
-        """Calculate deepfake risk based on AI and technical analysis"""
-        risk_indicators = 0
+        """Calculate deepfake risk based on AI and technical analysis - more conservative approach"""
+        risk_score = 0.0
         
-        # Check AI analysis for risk keywords
-        risk_keywords = ['manipulation', 'artificial', 'fake', 'inconsistent', 'suspicious']
-        for keyword in risk_keywords:
-            if keyword.lower() in ai_analysis.lower():
-                risk_indicators += 1
+        # Parse AI analysis verdict more accurately
+        analysis_lower = ai_analysis.lower()
         
-        # Check technical indicators
-        if technical_analysis.get('opencv_analysis', {}).get('sharpness', 0) < 50:
-            risk_indicators += 1
+        # Check for explicit verdicts first
+        if 'definitely fake' in analysis_lower or 'clearly manipulated' in analysis_lower:
+            risk_score += 3.0
+        elif 'likely manipulated' in analysis_lower or 'probably fake' in analysis_lower:
+            risk_score += 2.0
+        elif 'authentic' in analysis_lower or 'genuine' in analysis_lower or 'real' in analysis_lower:
+            risk_score -= 1.0  # Reduce risk for authentic verdict
         
-        if risk_indicators >= 3:
+        # Only add risk for strong manipulation indicators
+        strong_indicators = ['obvious manipulation', 'clear artifacts', 'definite editing', 'fake face']
+        for indicator in strong_indicators:
+            if indicator in analysis_lower:
+                risk_score += 1.0
+        
+        # Technical analysis - be more lenient
+        opencv_analysis = technical_analysis.get('opencv_analysis', {})
+        sharpness = opencv_analysis.get('sharpness', 100)
+        
+        # Only penalize very poor quality
+        if sharpness < 30:  # Very blurry
+            risk_score += 0.5
+        
+        # Conservative risk assessment
+        if risk_score >= 3.0:
             return 'high'
-        elif risk_indicators >= 1:
+        elif risk_score >= 1.5:
             return 'medium'
         else:
             return 'low'
 
     def _calculate_basic_image_risk(self, technical_analysis: Dict) -> str:
-        """Calculate basic risk assessment based on technical analysis only"""
-        risk_score = 0
+        """Calculate basic risk assessment based on technical analysis only - more conservative"""
+        risk_score = 0.0
         
         opencv_analysis = technical_analysis.get('opencv_analysis', {})
         pil_analysis = technical_analysis.get('pil_analysis', {})
         
-        # Check image sharpness (blurry images might indicate manipulation)
-        sharpness = opencv_analysis.get('sharpness', 0)
-        if sharpness < 50:
-            risk_score += 1
-        elif sharpness < 100:
+        # Be more lenient with sharpness - many real photos can be blurry
+        sharpness = opencv_analysis.get('sharpness', 100)
+        if sharpness < 20:  # Only very blurry images
             risk_score += 0.5
         
-        # Check for unusual brightness/contrast
+        # Be more lenient with brightness/contrast - normal variation is common
         brightness = opencv_analysis.get('brightness', 128)
         contrast = opencv_analysis.get('contrast', 50)
         
-        if brightness < 50 or brightness > 200:
-            risk_score += 0.5
-        if contrast < 20 or contrast > 100:
-            risk_score += 0.5
-        
-        # Check for missing EXIF data (might indicate processing)
-        if not pil_analysis.get('has_exif', False):
-            risk_score += 0.5
-        
-        # Check image format (some formats are more prone to manipulation)
-        image_format = pil_analysis.get('format', '').upper()
-        if image_format in ['WEBP', 'BMP']:
+        # Only extreme values are suspicious
+        if brightness < 20 or brightness > 235:
+            risk_score += 0.3
+        if contrast < 5 or contrast > 150:
             risk_score += 0.3
         
-        # Convert score to risk level
-        if risk_score >= 2:
+        # Missing EXIF is very common and not necessarily suspicious
+        # Removed EXIF penalty
+        
+        # Most image formats are legitimate
+        # Removed format penalty
+        
+        # Much more conservative thresholds
+        if risk_score >= 1.5:
             return 'high'
-        elif risk_score >= 1:
+        elif risk_score >= 0.8:
             return 'medium'
         else:
             return 'low'
@@ -935,17 +947,17 @@ class MisinformationAnalyzer:
             low_risk_frames = sum(1 for analysis in frame_analyses 
                                 if analysis.get('deepfake_risk') == 'low')
             
-            # Calculate overall risk based on frame analysis
+            # Calculate overall risk based on frame analysis - more conservative
             total_frames = len(frame_analyses)
             if total_frames == 0:
                 overall_risk = 'unknown'
                 print("⚠️ No frames were successfully analyzed")
-            elif high_risk_frames > total_frames // 2:
+            elif high_risk_frames >= (total_frames * 0.8):  # 80% of frames must be high risk
                 overall_risk = 'high'
                 print(f"🚨 High risk detected: {high_risk_frames}/{total_frames} frames")
-            elif (high_risk_frames + medium_risk_frames) > total_frames // 2:
+            elif high_risk_frames >= (total_frames * 0.5):  # 50% of frames must be high risk for medium
                 overall_risk = 'medium'
-                print(f"⚡ Medium risk detected: {high_risk_frames + medium_risk_frames}/{total_frames} frames")
+                print(f"⚡ Medium risk detected: {high_risk_frames}/{total_frames} frames")
             else:
                 overall_risk = 'low'
                 print(f"✅ Low risk detected: {low_risk_frames}/{total_frames} frames")
@@ -998,21 +1010,26 @@ class MisinformationAnalyzer:
                 frame_summary.append(f"Frame {i+1}: Risk={frame_analysis.get('deepfake_risk', 'unknown')}, Status={frame_analysis.get('status', 'unknown')}")
             
             prompt = f"""
-            Analyze this video for potential deepfakes and manipulation based on the following frame analysis data:
+            Analyze this video for authenticity based on frame analysis data. Be conservative - most real videos should be classified as authentic.
 
             Video Analysis Summary:
             - Total frames analyzed: {len(frame_analyses)}
             - Frame details: {'; '.join(frame_summary)}
             
-            Please evaluate:
-            1. Overall consistency across frames
-            2. Potential deepfake indicators
-            3. Video manipulation patterns
-            4. Temporal inconsistencies
-            5. Quality and authenticity assessment
+            IMPORTANT: Only classify as high risk if there are clear, obvious signs of manipulation across multiple frames.
 
-            Provide a comprehensive risk assessment (low/medium/high) and explain your reasoning.
-            Focus on identifying specific deepfake patterns or authenticity indicators.
+            Evaluate:
+            1. Consistency across frames - are there obvious inconsistencies?
+            2. Clear deepfake indicators - facial morphing, unnatural movements
+            3. Technical artifacts - obvious editing marks, quality jumps
+            4. Temporal flow - does motion look natural?
+
+            Risk Assessment Guidelines:
+            - LOW: Normal video with no clear manipulation signs (default)
+            - MEDIUM: Some suspicious indicators but not definitive
+            - HIGH: Clear, obvious manipulation evidence across multiple frames
+
+            Provide a conservative risk assessment and specific evidence for your conclusion.
             """
             
             response = await asyncio.to_thread(

@@ -224,7 +224,7 @@ async def get_models():
 @app.get("/api/test")
 async def test_endpoint():
     """Simple test endpoint"""
-    return {"message": "API is working", "status": "ok", "port": "8000"}
+    return {"message": "API is working", "status": "ok", "port": "3000"}
 
 @app.get("/debug")
 async def debug_info():
@@ -238,25 +238,28 @@ async def debug_info():
             "NEWSAPI_KEY": "Set" if os.getenv('NEWSAPI_KEY') else "Not set", 
             "FACTCHECK_API_KEY": "Set" if os.getenv('FACTCHECK_API_KEY') else "Not set"
         },
-        "port": 8000,
+        "port": 3000,
         "status": "running"
     }
 
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 Starting AI Misinformation Detector...")
-    print("=" * 50)
-    print("📝 Text Analysis: http://localhost:8000")
-    print("🖼️  Image Analysis: http://localhost:8000")
-    print("📚 API Documentation: http://localhost:8000/docs")
-    print("❤️  Health Check: http://localhost:8000/health")
-    print("=" * 50)
+    print("🚀 Starting CyberGuard AI Detector...")
+    print("=" * 60)
+    print("🌐 Main Application: http://localhost:3000")
+    print("📝 Text Analysis: http://localhost:3000")
+    print("🖼️  Image Analysis: http://localhost:3000")
+    print("🎬 Video Analysis: http://localhost:3000")
+    print("📚 API Documentation: http://localhost:3000/docs")
+    print("❤️  Health Check: http://localhost:3000/health")
+    print("🔧 Debug Info: http://localhost:3000/debug")
+    print("=" * 60)
     print("Press Ctrl+C to stop the server")
     print()
     
     try:
         # Use import string for reload to work properly
-        uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True)
     except KeyboardInterrupt:
         print("\n👋 Server stopped. Goodbye!")
     except Exception as e:

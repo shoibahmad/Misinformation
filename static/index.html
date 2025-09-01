@@ -4,77 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Powered Misinformation & Deepfake Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Mobile Sidebar Toggle -->
-        <button class="sidebar-toggle-btn" onclick="toggleMobileSidebar()" style="display: none;">
-            <i class="fas fa-bars"></i>
-        </button>
-        
-        <!-- Sidebar Overlay for Mobile -->
-        <div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-content">
+            <div class="welcome-logo">
+                <i class="fas fa-shield-virus"></i>
+            </div>
+            <h1 class="welcome-title">CyberGuard AI</h1>
+            <p class="welcome-subtitle">Next-Generation Misinformation & Deepfake Detection</p>
+            <div class="loading-container">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <p class="loading-text">Initializing AI Systems...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="main-app" style="display: none;">
+
         
         <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="logo">
-                    <i class="fas fa-shield-alt"></i>
-                    <h1>AI Detection Suite</h1>
+                    <i class="fas fa-shield-virus"></i>
+                    <h1>CyberGuard AI</h1>
                 </div>
-                <p class="subtitle">Advanced Misinformation & Deepfake Analysis</p>
-                
-
+                <p class="subtitle">Next-Generation Misinformation & Deepfake Detection</p>
             </div>
         </header>
-
-        <div class="content-wrapper">
-            <!-- Sidebar -->
-            <aside class="sidebar">
-            <div class="sidebar-content">
-                <!-- API Status Toggle -->
-                <div class="api-status-toggle" onclick="toggleApiStatus()">
-                    <div class="toggle-header">
-                        <i class="fas fa-server"></i>
-                        <span>API Status</span>
-                        <i class="fas fa-chevron-right toggle-icon" id="api-toggle-icon"></i>
-                    </div>
-                    <div class="status-summary" id="status-summary">
-                        <div class="summary-indicators">
-                            <div class="summary-indicator checking" id="summary-gemini"></div>
-                            <div class="summary-indicator checking" id="summary-newsapi"></div>
-                            <div class="summary-indicator checking" id="summary-factcheck"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Detailed API Status (Hidden by default) -->
-                <div class="api-status-details hidden" id="api-status-details">
-                    <div class="status-grid">
-                        <div class="status-item" id="gemini-status">
-                            <i class="fas fa-brain"></i>
-                            <span class="status-label">Gemini AI</span>
-                            <span class="status-text">Checking...</span>
-                            <div class="status-indicator checking"></div>
-                        </div>
-                        <div class="status-item" id="newsapi-status">
-                            <i class="fas fa-newspaper"></i>
-                            <span class="status-label">NewsAPI</span>
-                            <span class="status-text">Checking...</span>
-                            <div class="status-indicator checking"></div>
-                        </div>
-                        <div class="status-item" id="factcheck-status">
-                            <i class="fas fa-check-circle"></i>
-                            <span class="status-label">FactCheck</span>
-                            <span class="status-text">Checking...</span>
-                            <div class="status-indicator checking"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </aside>
 
         <!-- Main Content -->
         <main class="main-content">
@@ -318,7 +286,6 @@
                 </div>
             </div>
         </main>
-        </div>
 
         <!-- API Configuration Info -->
         <div class="api-info-section">
@@ -349,6 +316,50 @@
                         </div>
                     </div>
                     <p class="api-note">Add these keys to your <code>.env</code> file for full functionality</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Status Section - Bottom -->
+        <div class="bottom-api-status">
+            <div class="container">
+                <div class="api-status-toggle" onclick="toggleApiStatus()">
+                    <div class="toggle-header">
+                        <i class="fas fa-server"></i>
+                        <span>API Status</span>
+                        <i class="fas fa-chevron-up toggle-icon" id="api-toggle-icon"></i>
+                    </div>
+                    <div class="status-summary" id="status-summary">
+                        <div class="summary-indicators">
+                            <div class="summary-indicator checking" id="summary-gemini"></div>
+                            <div class="summary-indicator checking" id="summary-newsapi"></div>
+                            <div class="summary-indicator checking" id="summary-factcheck"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed API Status (Hidden by default) -->
+                <div class="api-status-details hidden" id="api-status-details">
+                    <div class="status-grid">
+                        <div class="status-item" id="gemini-status">
+                            <i class="fas fa-brain"></i>
+                            <span class="status-label">Gemini AI</span>
+                            <span class="status-text">Checking...</span>
+                            <div class="status-indicator checking"></div>
+                        </div>
+                        <div class="status-item" id="newsapi-status">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="status-label">NewsAPI</span>
+                            <span class="status-text">Checking...</span>
+                            <div class="status-indicator checking"></div>
+                        </div>
+                        <div class="status-item" id="factcheck-status">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="status-label">FactCheck</span>
+                            <span class="status-text">Checking...</span>
+                            <div class="status-indicator checking"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

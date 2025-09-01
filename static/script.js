@@ -4,9 +4,61 @@ let selectedVideoFile = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function () {
+    showWelcomeScreen();
+});
+
+// Welcome screen functionality
+function showWelcomeScreen() {
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const mainApp = document.getElementById('main-app');
+    const loadingText = document.querySelector('.loading-text');
+
+    // Dynamic loading messages
+    const loadingMessages = [
+        'Initializing AI Systems...',
+        'Loading Detection Models...',
+        'Preparing Analysis Tools...',
+        'Ready to Detect Misinformation!'
+    ];
+
+    let messageIndex = 0;
+
+    // Change loading text every 750ms
+    const messageInterval = setInterval(() => {
+        if (messageIndex < loadingMessages.length - 1) {
+            messageIndex++;
+            if (loadingText) {
+                loadingText.textContent = loadingMessages[messageIndex];
+            }
+        }
+    }, 750);
+
+    // Show welcome screen for 3 seconds
+    setTimeout(() => {
+        clearInterval(messageInterval);
+
+        // Start exit animation
+        welcomeScreen.classList.add('fade-out');
+
+        // After exit animation completes, hide welcome and show main app
+        setTimeout(() => {
+            welcomeScreen.style.display = 'none';
+            mainApp.style.display = 'flex';
+            mainApp.classList.add('fade-in');
+
+            // Initialize main app functionality
+            initializeMainApp();
+        }, 800); // Match the fade-out animation duration
+    }, 3000); // 3 seconds delay
+}
+
+// Initialize main application
+function initializeMainApp() {
     checkApiStatus();
     initializeEventListeners();
-});
+    initializeAnimations();
+    handleResize();
+}
 
 // Initialize event listeners
 function initializeEventListeners() {
@@ -17,29 +69,106 @@ function initializeEventListeners() {
             showTab(tabName);
         });
     });
+
+    // Add hover effects for cards
+    document.querySelectorAll('.analysis-option').forEach(option => {
+        option.addEventListener('mouseenter', function () {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+
+        option.addEventListener('mouseleave', function () {
+            if (!this.classList.contains('active')) {
+                this.style.transform = 'translateY(0) scale(1)';
+            }
+        });
+    });
 }
 
-// Tab switching for new layout
-function showTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
+// Initialize animations
+function initializeAnimations() {
+    // Animate elements on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe elements for animation
+    document.querySelectorAll('.analysis-option, .analysis-card').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
     });
+
+    // Add typing effect to subtitle
+    const subtitle = document.querySelector('.subtitle');
+    if (subtitle) {
+        const text = subtitle.textContent;
+        subtitle.textContent = '';
+        let i = 0;
+
+        const typeWriter = () => {
+            if (i < text.length) {
+                subtitle.textContent += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 50);
+            }
+        };
+
+        setTimeout(typeWriter, 1000);
+    }
+}
+
+// Tab switching for new layout with animations
+function showTab(tabName) {
+    // Hide all tabs with fade out
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        if (tab.classList.contains('active')) {
+            tab.style.opacity = '0';
+            tab.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                tab.classList.remove('active');
+            }, 200);
+        }
+    });
+
+    // Remove active state from all options
     document.querySelectorAll('.analysis-option').forEach(option => {
         option.classList.remove('active');
+        option.style.transform = 'translateY(0) scale(1)';
     });
 
-    // Show selected tab
-    const targetTab = document.getElementById(tabName + '-tab');
-    if (targetTab) {
-        targetTab.classList.add('active');
-    }
+    // Show selected tab with fade in
+    setTimeout(() => {
+        const targetTab = document.getElementById(tabName + '-tab');
+        if (targetTab) {
+            targetTab.classList.add('active');
+            targetTab.style.opacity = '0';
+            targetTab.style.transform = 'translateY(20px)';
 
-    // Find and activate the corresponding analysis option
-    const targetOption = document.querySelector(`[data-tab="${tabName}"]`);
-    if (targetOption) {
-        targetOption.classList.add('active');
-    }
+            // Animate in
+            setTimeout(() => {
+                targetTab.style.opacity = '1';
+                targetTab.style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        // Find and activate the corresponding analysis option
+        const targetOption = document.querySelector(`[data-tab="${tabName}"]`);
+        if (targetOption) {
+            targetOption.classList.add('active');
+            targetOption.style.transform = 'translateY(-8px) scale(1.02)';
+        }
+    }, 200);
 
     // Clear results
     hideResults();
@@ -78,38 +207,26 @@ function toggleApiStatus() {
 
     if (details.classList.contains('hidden')) {
         details.classList.remove('hidden');
-        icon.classList.add('expanded');
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
     } else {
         details.classList.add('hidden');
-        icon.classList.remove('expanded');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
     }
 }
 
-// Mobile sidebar functions
-function toggleMobileSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    sidebar.classList.toggle('mobile-open');
-    overlay.classList.toggle('active');
-}
-
-function closeMobileSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
-
-    sidebar.classList.remove('mobile-open');
-    overlay.classList.remove('active');
-}
-
-// Show/hide mobile toggle button based on screen size
+// Handle responsive design
 function handleResize() {
-    const toggleBtn = document.querySelector('.sidebar-toggle-btn');
-    if (window.innerWidth <= 1024) {
-        toggleBtn.style.display = 'flex';
-    } else {
-        toggleBtn.style.display = 'none';
-        closeMobileSidebar(); // Close sidebar when switching to desktop
+    // Close API status details on mobile when resizing
+    if (window.innerWidth <= 768) {
+        const details = document.getElementById('api-status-details');
+        const icon = document.getElementById('api-toggle-icon');
+        if (details && !details.classList.contains('hidden')) {
+            details.classList.add('hidden');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
     }
 }
 
@@ -340,6 +457,9 @@ async function analyzeVideo() {
 
 // Display functions
 function displayTextResults(result) {
+    // Debug: Log the complete result to console
+    console.log('📊 Complete analysis result:', result);
+
     // Risk assessment
     const riskLevel = getRiskLevel(result.misinformation_score);
     document.getElementById('risk-badge').textContent = riskLevel.level;
@@ -366,41 +486,91 @@ function displayTextResults(result) {
 
     if (result.analysis) {
         const analysis = result.analysis;
+        console.log('📋 Analysis object:', analysis);
 
-        // Gemini AI Analysis - Show first if available
-        if (analysis.gemini_analysis && analysis.gemini_analysis.status === 'success') {
+        // Gemini AI Analysis - Always show section
+        if (analysis.gemini_analysis) {
             const gemini = analysis.gemini_analysis;
-            const verdict = gemini.fake_news_verdict || 'UNKNOWN';
-            const confidence = gemini.confidence || 0;
 
+            if (gemini.status === 'success') {
+                const verdict = gemini.fake_news_verdict || 'UNKNOWN';
+                const confidence = gemini.confidence || 0;
+
+                analysisHTML += `
+                    <div class="analysis-section gemini-section">
+                        <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
+                        <div class="verdict-card">
+                            <div class="verdict-header">
+                                <h5><i class="fas fa-gavel"></i> Expert Verdict</h5>
+                            </div>
+                            <div class="verdict-content">
+                                <div class="verdict-badge verdict-${verdict.toLowerCase().replace(/\s+/g, '-')}">
+                                    ${verdict}
+                                </div>
+                                <div class="confidence-meter">
+                                    <div class="confidence-label">Confidence: ${confidence}%</div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: ${confidence}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-detailed-analysis">
+                            <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
+                            <div class="ai-analysis-text">${gemini.analysis.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show error or not available message
+                const statusMessage = gemini.status === 'not_available' ?
+                    'Gemini AI not configured. Configure GEMINI_API_KEY for advanced analysis.' :
+                    `Gemini analysis failed: ${gemini.analysis || 'Unknown error'}`;
+
+                analysisHTML += `
+                    <div class="analysis-section gemini-section">
+                        <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
+                        <div class="verdict-card">
+                            <div class="verdict-header">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Status</h5>
+                            </div>
+                            <div class="verdict-content">
+                                <div class="verdict-badge verdict-unknown">
+                                    NOT AVAILABLE
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-detailed-analysis">
+                            <h6><i class="fas fa-info-circle"></i> Information</h6>
+                            <div class="ai-analysis-text">${statusMessage}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            // No Gemini analysis at all
             analysisHTML += `
                 <div class="analysis-section gemini-section">
                     <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
                     <div class="verdict-card">
                         <div class="verdict-header">
-                            <h5><i class="fas fa-gavel"></i> Expert Verdict</h5>
+                            <h5><i class="fas fa-exclamation-triangle"></i> Status</h5>
                         </div>
                         <div class="verdict-content">
-                            <div class="verdict-badge verdict-${verdict.toLowerCase().replace(' ', '-')}">
-                                ${verdict}
-                            </div>
-                            <div class="confidence-meter">
-                                <div class="confidence-label">Confidence: ${confidence}%</div>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" style="width: ${confidence}%"></div>
-                                </div>
+                            <div class="verdict-badge verdict-unknown">
+                                NOT CONFIGURED
                             </div>
                         </div>
                     </div>
                     <div class="ai-detailed-analysis">
-                        <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
-                        <div class="ai-analysis-text">${gemini.analysis.replace(/\n/g, '<br>')}</div>
+                        <h6><i class="fas fa-info-circle"></i> Information</h6>
+                        <div class="ai-analysis-text">Configure GEMINI_API_KEY environment variable to enable advanced AI-powered misinformation detection.</div>
                     </div>
                 </div>
             `;
         }
 
-        // Linguistic patterns
+        // Linguistic patterns - Always show
         if (analysis.linguistic_patterns) {
             const ling = analysis.linguistic_patterns;
             analysisHTML += `
@@ -409,27 +579,39 @@ function displayTextResults(result) {
                     <div class="analysis-grid">
                         <div class="analysis-item">
                             <span>Risk Level:</span>
-                            <span class="badge ${ling.risk_level}">${ling.risk_level}</span>
+                            <span class="badge ${ling.risk_level}">${ling.risk_level.toUpperCase()}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Suspicious Phrases:</span>
-                            <span>${ling.suspicious_phrases}</span>
+                            <span>${ling.suspicious_phrases || 0}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Emotional Language:</span>
-                            <span>${ling.emotional_language}</span>
+                            <span>${ling.emotional_language || 0}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Caps Ratio:</span>
-                            <span>${(ling.caps_ratio * 100).toFixed(1)}%</span>
+                            <span>${((ling.caps_ratio || 0) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-language"></i> Linguistic Analysis</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge error">Not Available</span>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // Sentiment analysis
-        if (analysis.sentiment) {
+        // Sentiment analysis - Always show
+        if (analysis.sentiment && !analysis.sentiment.error) {
             const sent = analysis.sentiment;
             analysisHTML += `
                 <div class="analysis-section">
@@ -437,26 +619,42 @@ function displayTextResults(result) {
                     <div class="analysis-grid">
                         <div class="analysis-item">
                             <span>Sentiment:</span>
-                            <span class="badge ${sent.sentiment}">${sent.sentiment}</span>
+                            <span class="badge ${sent.sentiment}">${sent.sentiment.toUpperCase()}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Polarity:</span>
-                            <span>${sent.polarity.toFixed(2)}</span>
+                            <span>${(sent.polarity || 0).toFixed(2)}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Subjectivity:</span>
-                            <span>${sent.subjectivity.toFixed(2)}</span>
+                            <span>${(sent.subjectivity || 0).toFixed(2)}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Objectivity:</span>
-                            <span>${sent.objectivity}</span>
+                            <span>${sent.objectivity || 'unknown'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-heart"></i> Sentiment Analysis</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge error">Analysis Failed</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Error:</span>
+                            <span>${analysis.sentiment?.error || 'Unknown error'}</span>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // Fact check results
+        // Fact check results - Always show
         if (analysis.fact_check) {
             const fact = analysis.fact_check;
             analysisHTML += `
@@ -465,7 +663,7 @@ function displayTextResults(result) {
                     <div class="analysis-grid">
                         <div class="analysis-item">
                             <span>Status:</span>
-                            <span class="badge ${fact.status}">${fact.status}</span>
+                            <span class="badge ${fact.status === 'success' ? 'success' : 'error'}">${fact.status.toUpperCase()}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Claims Found:</span>
@@ -475,12 +673,30 @@ function displayTextResults(result) {
                             <span>Has Fact Checks:</span>
                             <span>${fact.has_fact_checks ? 'Yes' : 'No'}</span>
                         </div>
+                        ${fact.message ? `
+                        <div class="analysis-item">
+                            <span>Message:</span>
+                            <span>${fact.message}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        } else {
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-check-circle"></i> Fact Check Results</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge error">Not Available</span>
+                        </div>
                     </div>
                 </div>
             `;
         }
 
-        // News verification
+        // News verification - Always show
         if (analysis.news_verification) {
             const news = analysis.news_verification;
             analysisHTML += `
@@ -489,7 +705,7 @@ function displayTextResults(result) {
                     <div class="analysis-grid">
                         <div class="analysis-item">
                             <span>Status:</span>
-                            <span class="badge ${news.status}">${news.status}</span>
+                            <span class="badge ${news.status === 'success' ? 'success' : 'error'}">${news.status.toUpperCase()}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Articles Found:</span>
@@ -503,13 +719,76 @@ function displayTextResults(result) {
                             <span>Reliability Ratio:</span>
                             <span>${((news.reliability_ratio || 0) * 100).toFixed(1)}%</span>
                         </div>
+                        ${news.message ? `
+                        <div class="analysis-item">
+                            <span>Message:</span>
+                            <span>${news.message}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        } else {
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-newspaper"></i> News Verification</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge error">Not Available</span>
+                        </div>
                     </div>
                 </div>
             `;
         }
+    } else {
+        // No analysis object - show error message
+        analysisHTML = `
+            <div class="analysis-section">
+                <h4><i class="fas fa-exclamation-triangle"></i> Analysis Error</h4>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span>Status:</span>
+                        <span class="badge error">No Analysis Data</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Message:</span>
+                        <span>Analysis data not available. Please try again.</span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    document.getElementById('analysis-content').innerHTML = analysisHTML;
+    // Ensure we always have some content to display
+    if (!analysisHTML.trim()) {
+        analysisHTML = `
+            <div class="analysis-section">
+                <h4><i class="fas fa-exclamation-triangle"></i> Display Error</h4>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span>Status:</span>
+                        <span class="badge error">No Content Generated</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Debug Info:</span>
+                        <span>Analysis object: ${result.analysis ? 'Present' : 'Missing'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    console.log('🎨 Generated HTML length:', analysisHTML.length);
+    console.log('🎨 Generated HTML preview:', analysisHTML.substring(0, 200) + '...');
+
+    const analysisContentElement = document.getElementById('analysis-content');
+    if (analysisContentElement) {
+        analysisContentElement.innerHTML = analysisHTML;
+        console.log('✅ Content inserted into DOM');
+    } else {
+        console.error('❌ analysis-content element not found!');
+    }
 
     // Recommendations
     displayRecommendations(result.recommendations || []);
@@ -845,7 +1124,7 @@ function displayRecommendations(recommendations) {
     });
 }
 
-// Loading states
+// Enhanced loading states with animations
 function setTextLoading(loading) {
     const btn = document.getElementById('analyze-text-btn');
     const text = document.getElementById('text-btn-text');
@@ -853,12 +1132,28 @@ function setTextLoading(loading) {
 
     if (loading) {
         btn.disabled = true;
-        text.classList.add('hidden');
-        spinner.classList.remove('hidden');
+        btn.style.transform = 'scale(0.98)';
+        text.style.opacity = '0';
+
+        setTimeout(() => {
+            text.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            spinner.style.opacity = '1';
+        }, 150);
+
+        // Add pulsing effect
+        btn.style.animation = 'buttonPulse 2s ease-in-out infinite';
     } else {
         btn.disabled = false;
-        text.classList.remove('hidden');
-        spinner.classList.add('hidden');
+        btn.style.transform = 'scale(1)';
+        btn.style.animation = 'none';
+
+        spinner.style.opacity = '0';
+        setTimeout(() => {
+            spinner.classList.add('hidden');
+            text.classList.remove('hidden');
+            text.style.opacity = '1';
+        }, 150);
     }
 }
 
@@ -869,12 +1164,27 @@ function setImageLoading(loading) {
 
     if (loading) {
         btn.disabled = true;
-        text.classList.add('hidden');
-        spinner.classList.remove('hidden');
+        btn.style.transform = 'scale(0.98)';
+        text.style.opacity = '0';
+
+        setTimeout(() => {
+            text.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            spinner.style.opacity = '1';
+        }, 150);
+
+        btn.style.animation = 'buttonPulse 2s ease-in-out infinite';
     } else {
         btn.disabled = !selectedImageFile;
-        text.classList.remove('hidden');
-        spinner.classList.add('hidden');
+        btn.style.transform = 'scale(1)';
+        btn.style.animation = 'none';
+
+        spinner.style.opacity = '0';
+        setTimeout(() => {
+            spinner.classList.add('hidden');
+            text.classList.remove('hidden');
+            text.style.opacity = '1';
+        }, 150);
     }
 }
 
@@ -885,12 +1195,27 @@ function setVideoLoading(loading) {
 
     if (loading) {
         btn.disabled = true;
-        text.classList.add('hidden');
-        spinner.classList.remove('hidden');
+        btn.style.transform = 'scale(0.98)';
+        text.style.opacity = '0';
+
+        setTimeout(() => {
+            text.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            spinner.style.opacity = '1';
+        }, 150);
+
+        btn.style.animation = 'buttonPulse 2s ease-in-out infinite';
     } else {
         btn.disabled = !selectedVideoFile;
-        text.classList.remove('hidden');
-        spinner.classList.add('hidden');
+        btn.style.transform = 'scale(1)';
+        btn.style.animation = 'none';
+
+        spinner.style.opacity = '0';
+        setTimeout(() => {
+            spinner.classList.add('hidden');
+            text.classList.remove('hidden');
+            text.style.opacity = '1';
+        }, 150);
     }
 }
 
@@ -942,4 +1267,59 @@ function exportResults() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+// Test function to verify display functionality
+function testDisplay() {
+    console.log('🧪 Testing display functionality...');
+
+    // Create mock result data
+    const mockResult = {
+        misinformation_score: 0.3,
+        confidence: 0.85,
+        analysis: {
+            gemini_analysis: {
+                status: 'success',
+                fake_news_verdict: 'LEGITIMATE',
+                confidence: 85,
+                analysis: 'This appears to be a legitimate news article with no obvious signs of misinformation. The content is factual and well-sourced.'
+            },
+            linguistic_patterns: {
+                risk_level: 'low',
+                suspicious_phrases: 0,
+                emotional_language: 1,
+                caps_ratio: 0.032
+            },
+            sentiment: {
+                sentiment: 'neutral',
+                polarity: 0.0,
+                subjectivity: 0.0,
+                objectivity: 'objective'
+            },
+            fact_check: {
+                status: 'success',
+                claims_found: 0,
+                has_fact_checks: false,
+                message: 'No controversial claims found'
+            },
+            news_verification: {
+                status: 'success',
+                total_articles: 0,
+                reliable_sources: 0,
+                reliability_ratio: 0.0,
+                message: 'No related articles found'
+            }
+        },
+        recommendations: [
+            '✅ Content appears credible according to AI analysis',
+            '📰 Information appears to align with reliable sources',
+            '👍 Still recommended to verify important claims'
+        ]
+    };
+
+    console.log('🧪 Displaying mock result...');
+    displayTextResults(mockResult);
+
+    // Show results section
+    showResults();
 }

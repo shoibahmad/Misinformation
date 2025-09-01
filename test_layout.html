@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Test</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .header-test { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 20px; 
+            background: #f0f0f0; 
+            margin-bottom: 20px;
+        }
+        .api-status { 
+            background: #e0e0e0; 
+            padding: 10px; 
+            border-radius: 8px; 
+            min-width: 200px;
+        }
+        .content { 
+            background: #f8f8f8; 
+            padding: 20px; 
+            border-radius: 8px; 
+        }
+        @media (max-width: 768px) {
+            .header-test { flex-direction: column; gap: 15px; }
+            .api-status { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header-test">
+            <div>
+                <h1>CyberGuard AI</h1>
+                <p>Next-Generation Detection</p>
+            </div>
+            <div class="api-status">
+                <strong>API Status</strong>
+                <div>● ● ●</div>
+            </div>
+        </div>
+        <div class="content">
+            <h2>Main Content Area</h2>
+            <p>This is now full screen without sidebar. The API status is in the header.</p>
+            <p>Resize the window to see responsive behavior.</p>
+        </div>
+    </div>
+</body>
+</html>

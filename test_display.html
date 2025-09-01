@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Display</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { border: 1px solid #ccc; margin: 10px 0; padding: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Display Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Basic HTML</h3>
+        <p>This should be visible</p>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: JavaScript Injection</h3>
+        <div id="test-content">Loading...</div>
+    </div>
+    
+    <script>
+        // Test JavaScript execution
+        document.getElementById('test-content').innerHTML = `
+            <div class="analysis-section gemini-section">
+                <h4>AI Expert Analysis</h4>
+                <div class="verdict-card">
+                    <div class="verdict-content">
+                        <div class="verdict-badge verdict-legitimate">
+                            LEGITIMATE
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-detailed-analysis">
+                    <h6>Detailed Analysis</h6>
+                    <div class="ai-analysis-text">This is a test of the Gemini analysis display.</div>
+                </div>
+            </div>
+        `;
+        
+        console.log('Test JavaScript executed successfully');
+    </script>
+</body>
+</html>
