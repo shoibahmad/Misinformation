@@ -9,7 +9,7 @@ import socket
 import sys
 from main import app
 
-def find_available_port(start_port=8003, max_attempts=10):
+def find_available_port(start_port=8000, max_attempts=10):
     """Find an available port starting from start_port"""
     for port in range(start_port, start_port + max_attempts):
         try:
@@ -45,39 +45,32 @@ def kill_existing_process(port):
         return False
 
 if __name__ == "__main__":
-    DEFAULT_PORT = 8003
+    DEFAULT_PORT = 8000
     
     print("🚀 Starting AI-Powered Misinformation & Deepfake Detection Tool...")
-    print("=" * 60)
+    print("=" * 70)
     
     # Try to find an available port
     try:
         port = find_available_port(DEFAULT_PORT)
         
         if port != DEFAULT_PORT:
-            print(f"⚠️  Port {DEFAULT_PORT} is busy")
-            
-            # Ask user if they want to kill existing process or use different port
-            choice = input(f"🤔 Kill existing process on port {DEFAULT_PORT}? (y/n): ").lower().strip()
-            
-            if choice in ['y', 'yes']:
-                if kill_existing_process(DEFAULT_PORT):
-                    port = DEFAULT_PORT
-                    print(f"✅ Using port {DEFAULT_PORT}")
-                else:
-                    print(f"⚠️  Could not kill existing process, using port {port}")
-            else:
-                print(f"✅ Using alternative port {port}")
+            print(f"⚠️  Port {DEFAULT_PORT} is busy, using port {port}")
+        else:
+            print(f"✅ Using port {DEFAULT_PORT}")
         
     except RuntimeError as e:
         print(f"❌ {e}")
-        print("💡 Try manually killing processes: python kill_port.py")
+        print("💡 Try a different port or kill existing processes")
         sys.exit(1)
     
-    print(f"🌐 Server: http://localhost:{port}")
+    print(f"🌐 Main Interface: http://localhost:{port}")
+    print(f"🔍 API Status: http://localhost:{port}/api/status")
+    print(f"🧪 Debug Info: http://localhost:{port}/debug")
     print(f"📚 API Documentation: http://localhost:{port}/docs")
     print(f"❤️  Health Check: http://localhost:{port}/health")
-    print("=" * 60)
+    print("=" * 70)
+    print("🎯 Open http://localhost:{} in your browser to start!".format(port))
     print("Press Ctrl+C to stop the server")
     print()
     

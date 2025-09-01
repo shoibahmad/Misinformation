@@ -9,38 +9,140 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Mobile Sidebar Toggle -->
+        <button class="sidebar-toggle-btn" onclick="toggleMobileSidebar()" style="display: none;">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+        
         <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="logo">
                     <i class="fas fa-shield-alt"></i>
-                    <h1>AI Misinformation & Deepfake Detector</h1>
+                    <h1>AI Detection Suite</h1>
                 </div>
-                <p class="subtitle">Comprehensive detection using Google Gemini Pro, NewsAPI, and advanced analysis</p>
-                <div class="api-status">
-                    <span class="status-indicator" id="api-status">🔧 Configure API keys for full functionality</span>
-                </div>
+                <p class="subtitle">Advanced Misinformation & Deepfake Analysis</p>
+                
+
             </div>
         </header>
+
+        <div class="content-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+            <div class="sidebar-content">
+                <!-- API Status Toggle -->
+                <div class="api-status-toggle" onclick="toggleApiStatus()">
+                    <div class="toggle-header">
+                        <i class="fas fa-server"></i>
+                        <span>API Status</span>
+                        <i class="fas fa-chevron-right toggle-icon" id="api-toggle-icon"></i>
+                    </div>
+                    <div class="status-summary" id="status-summary">
+                        <div class="summary-indicators">
+                            <div class="summary-indicator checking" id="summary-gemini"></div>
+                            <div class="summary-indicator checking" id="summary-newsapi"></div>
+                            <div class="summary-indicator checking" id="summary-factcheck"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed API Status (Hidden by default) -->
+                <div class="api-status-details hidden" id="api-status-details">
+                    <div class="status-grid">
+                        <div class="status-item" id="gemini-status">
+                            <i class="fas fa-brain"></i>
+                            <span class="status-label">Gemini AI</span>
+                            <span class="status-text">Checking...</span>
+                            <div class="status-indicator checking"></div>
+                        </div>
+                        <div class="status-item" id="newsapi-status">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="status-label">NewsAPI</span>
+                            <span class="status-text">Checking...</span>
+                            <div class="status-indicator checking"></div>
+                        </div>
+                        <div class="status-item" id="factcheck-status">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="status-label">FactCheck</span>
+                            <span class="status-text">Checking...</span>
+                            <div class="status-indicator checking"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
         <!-- Main Content -->
         <main class="main-content">
             <div class="container">
-                <!-- Navigation Tabs -->
-                <nav class="tab-navigation">
-                    <button class="tab-btn active" onclick="showTab('text')" data-tab="text">
-                        <i class="fas fa-newspaper"></i>
-                        <span>Fake News Detection</span>
-                    </button>
-                    <button class="tab-btn" onclick="showTab('image')" data-tab="image">
-                        <i class="fas fa-image"></i>
-                        <span>Deepfake Images</span>
-                    </button>
-                    <button class="tab-btn" onclick="showTab('video')" data-tab="video">
-                        <i class="fas fa-video"></i>
-                        <span>Deepfake Videos</span>
-                    </button>
-                </nav>
+                <!-- Analysis Type Selection -->
+                <div class="analysis-type-section">
+                    <div class="section-header">
+                        <i class="fas fa-search"></i>
+                        <h2>Choose Analysis Type</h2>
+                        <p>Select the type of content you want to analyze for misinformation or manipulation</p>
+                    </div>
+                    
+                    <div class="analysis-options">
+                        <div class="analysis-option active" onclick="showTab('text')" data-tab="text">
+                            <div class="option-icon">
+                                <i class="fas fa-newspaper"></i>
+                            </div>
+                            <div class="option-content">
+                                <h3>Text Analysis</h3>
+                                <p>Detect fake news, misinformation, and biased content in articles and posts</p>
+                                <div class="option-features">
+                                    <span class="feature-tag">Sentiment Analysis</span>
+                                    <span class="feature-tag">Fact Checking</span>
+                                    <span class="feature-tag">Bias Detection</span>
+                                </div>
+                            </div>
+                            <div class="option-indicator">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-option" onclick="showTab('image')" data-tab="image">
+                            <div class="option-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="option-content">
+                                <h3>Image Analysis</h3>
+                                <p>Identify deepfakes, manipulated photos, and AI-generated images</p>
+                                <div class="option-features">
+                                    <span class="feature-tag">Deepfake Detection</span>
+                                    <span class="feature-tag">Manipulation Check</span>
+                                    <span class="feature-tag">AI Generation</span>
+                                </div>
+                            </div>
+                            <div class="option-indicator">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-option" onclick="showTab('video')" data-tab="video">
+                            <div class="option-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div class="option-content">
+                                <h3>Video Analysis</h3>
+                                <p>Detect deepfake videos, face swaps, and synthetic media content</p>
+                                <div class="option-features">
+                                    <span class="feature-tag">Face Swap Detection</span>
+                                    <span class="feature-tag">Synthetic Media</span>
+                                    <span class="feature-tag">Frame Analysis</span>
+                                </div>
+                            </div>
+                            <div class="option-indicator">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Text Analysis Tab -->
                 <div id="text-tab" class="tab-content active">
@@ -216,6 +318,7 @@
                 </div>
             </div>
         </main>
+        </div>
 
         <!-- API Configuration Info -->
         <div class="api-info-section">

@@ -1,50 +1,174 @@
 // Global variables
 let selectedImageFile = null;
-let selectedVideoFi
+let selectedVideoFile = null;
 
-// Tab switching
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function () {
+    checkApiStatus();
+    initializeEventListeners();
+});
+
+// Initialize event listeners
+function initializeEventListeners() {
+    // Add click handlers for analysis options
+    document.querySelectorAll('.analysis-option').forEach(option => {
+        option.addEventListener('click', function () {
+            const tabName = this.getAttribute('data-tab');
+            showTab(tabName);
+        });
+    });
+}
+
+// Tab switching for new layout
 function showTab(tabName) {
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.analysis-option').forEach(option => {
+        option.classList.remove('active');
     });
-    
+
     // Show selected tab
-    document.getElementById(tabName + '-tab').classList.add('active');
-    event.target.classList.add('active');
-    
+    const targetTab = document.getElementById(tabName + '-tab');
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
+
+    // Find and activate the corresponding analysis option
+    const targetOption = document.querySelector(`[data-tab="${tabName}"]`);
+    if (targetOption) {
+        targetOption.classList.add('active');
+    }
+
     // Clear results
     hideResults();
     hideError();
+}
+
+// Check API status
+async function checkApiStatus() {
+    const statusItems = {
+        'gemini-status': { name: 'Gemini AI', key: 'gemini_available' },
+        'newsapi-status': { name: 'NewsAPI', key: 'newsapi_available' },
+        'factcheck-status': { name: 'FactCheck', key: 'factcheck_available' }
+    };
+
+    try {
+        const response = await fetch('/api/status');
+        const status = await response.json();
+
+        Object.entries(statusItems).forEach(([elementId, config]) => {
+            updateStatusIndicator(elementId, status[config.key], config.name);
+        });
+
+    } catch (error) {
+        console.error('Failed to check API status:', error);
+        // Set all to error state
+        Object.keys(statusItems).forEach(elementId => {
+            updateStatusIndicator(elementId, false, 'Error');
+        });
+    }
+}
+
+// Toggle API status details
+function toggleApiStatus() {
+    const details = document.getElementById('api-status-details');
+    const icon = document.getElementById('api-toggle-icon');
+
+    if (details.classList.contains('hidden')) {
+        details.classList.remove('hidden');
+        icon.classList.add('expanded');
+    } else {
+        details.classList.add('hidden');
+        icon.classList.remove('expanded');
+    }
+}
+
+// Mobile sidebar functions
+function toggleMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+}
+
+// Show/hide mobile toggle button based on screen size
+function handleResize() {
+    const toggleBtn = document.querySelector('.sidebar-toggle-btn');
+    if (window.innerWidth <= 1024) {
+        toggleBtn.style.display = 'flex';
+    } else {
+        toggleBtn.style.display = 'none';
+        closeMobileSidebar(); // Close sidebar when switching to desktop
+    }
+}
+
+// Initialize resize handler
+window.addEventListener('resize', handleResize);
+document.addEventListener('DOMContentLoaded', handleResize);
+
+// Update individual status indicator
+function updateStatusIndicator(elementId, isReady, serviceName) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const statusText = element.querySelector('.status-text');
+    const statusIndicator = element.querySelector('.status-indicator');
+
+    if (isReady) {
+        statusText.textContent = 'Ready';
+        statusIndicator.className = 'status-indicator ready';
+    } else {
+        statusText.textContent = 'Not configured';
+        statusIndicator.className = 'status-indicator error';
+    }
+
+    // Update summary indicator
+    const summaryId = 'summary-' + elementId.split('-')[0];
+    const summaryIndicator = document.getElementById(summaryId);
+    if (summaryIndicator) {
+        if (isReady) {
+            summaryIndicator.className = 'summary-indicator ready';
+        } else {
+            summaryIndicator.className = 'summary-indicator error';
+        }
+    }
 }
 
 // File handling
 function handleImageSelect() {
     const fileInput = document.getElementById('image-input');
     const file = fileInput.files[0];
-    
+
     if (!file) return;
-    
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
         showError('Please select a valid image file');
         return;
     }
-    
+
     // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
         showError('File size must be less than 10MB');
         return;
     }
-    
+
     selectedImageFile = file;
-    
+
     // Show preview
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const preview = document.getElementById('image-preview');
         preview.innerHTML = `
             <img src="${e.target.result}" alt="Preview" style="max-width: 300px; max-height: 200px;">
@@ -54,7 +178,7 @@ function handleImageSelect() {
         document.getElementById('upload-placeholder').style.display = 'none';
     };
     reader.readAsDataURL(file);
-    
+
     // Enable analyze button
     document.getElementById('analyze-image-btn').disabled = false;
 }
@@ -62,23 +186,23 @@ function handleImageSelect() {
 function handleVideoSelect() {
     const fileInput = document.getElementById('video-input');
     const file = fileInput.files[0];
-    
+
     if (!file) return;
-    
+
     // Validate file type
     if (!file.type.startsWith('video/')) {
         showError('Please select a valid video file');
         return;
     }
-    
+
     // Validate file size (100MB)
     if (file.size > 100 * 1024 * 1024) {
         showError('File size must be less than 100MB');
         return;
     }
-    
+
     selectedVideoFile = file;
-    
+
     // Show preview
     const preview = document.getElementById('video-preview');
     preview.innerHTML = `
@@ -90,7 +214,7 @@ function handleVideoSelect() {
     `;
     preview.classList.remove('hidden');
     document.getElementById('video-upload-placeholder').style.display = 'none';
-    
+
     // Enable analyze button
     document.getElementById('analyze-video-btn').disabled = false;
 }
@@ -106,25 +230,25 @@ function formatFileSize(bytes) {
 // Analysis functions
 async function analyzeText() {
     const text = document.getElementById('text-input').value.trim();
-    
+
     if (!text) {
         showError('Please enter some text to analyze');
         return;
     }
-    
+
     setTextLoading(true);
     hideError();
     hideResults();
-    
+
     try {
         const formData = new FormData();
         formData.append('text', text);
-        
+
         const response = await fetch('/api/analyze-text', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             let errorMessage = 'Analysis failed';
             try {
@@ -135,10 +259,10 @@ async function analyzeText() {
             }
             throw new Error(errorMessage);
         }
-        
+
         const result = await response.json();
         displayTextResults(result);
-        
+
     } catch (error) {
         showError(error.message || 'An error occurred during analysis');
     } finally {
@@ -151,28 +275,28 @@ async function analyzeImage() {
         showError('Please select an image file');
         return;
     }
-    
+
     setImageLoading(true);
     hideError();
     hideResults();
-    
+
     try {
         const formData = new FormData();
         formData.append('file', selectedImageFile);
-        
+
         const response = await fetch('/api/analyze-image', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.detail || 'Image analysis failed');
         }
-        
+
         const result = await response.json();
         displayImageResults(result);
-        
+
     } catch (error) {
         showError(error.message || 'An error occurred during image analysis');
     } finally {
@@ -185,28 +309,28 @@ async function analyzeVideo() {
         showError('Please select a video file');
         return;
     }
-    
+
     setVideoLoading(true);
     hideError();
     hideResults();
-    
+
     try {
         const formData = new FormData();
         formData.append('file', selectedVideoFile);
-        
+
         const response = await fetch('/api/analyze-video', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.detail || 'Video analysis failed');
         }
-        
+
         const result = await response.json();
         displayVideoResults(result);
-        
+
     } catch (error) {
         showError(error.message || 'An error occurred during video analysis');
     } finally {
@@ -220,12 +344,12 @@ function displayTextResults(result) {
     const riskLevel = getRiskLevel(result.misinformation_score);
     document.getElementById('risk-badge').textContent = riskLevel.level;
     document.getElementById('risk-badge').className = `risk-badge ${riskLevel.className}`;
-    
+
     // Update risk meter
     const riskMeter = document.getElementById('risk-meter-fill');
     riskMeter.style.width = `${result.misinformation_score * 100}%`;
     riskMeter.className = `meter-fill ${riskLevel.className}`;
-    
+
     document.getElementById('scores').innerHTML = `
         <div class="score-item">
             <span class="score-label">Misinformation Score:</span>
@@ -236,13 +360,46 @@ function displayTextResults(result) {
             <span class="score-value">${(result.confidence * 100).toFixed(1)}%</span>
         </div>
     `;
-    
+
     // Analysis details
     let analysisHTML = '';
-    
+
     if (result.analysis) {
         const analysis = result.analysis;
-        
+
+        // Gemini AI Analysis - Show first if available
+        if (analysis.gemini_analysis && analysis.gemini_analysis.status === 'success') {
+            const gemini = analysis.gemini_analysis;
+            const verdict = gemini.fake_news_verdict || 'UNKNOWN';
+            const confidence = gemini.confidence || 0;
+
+            analysisHTML += `
+                <div class="analysis-section gemini-section">
+                    <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
+                    <div class="verdict-card">
+                        <div class="verdict-header">
+                            <h5><i class="fas fa-gavel"></i> Expert Verdict</h5>
+                        </div>
+                        <div class="verdict-content">
+                            <div class="verdict-badge verdict-${verdict.toLowerCase().replace(' ', '-')}">
+                                ${verdict}
+                            </div>
+                            <div class="confidence-meter">
+                                <div class="confidence-label">Confidence: ${confidence}%</div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: ${confidence}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-detailed-analysis">
+                        <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
+                        <div class="ai-analysis-text">${gemini.analysis.replace(/\n/g, '<br>')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Linguistic patterns
         if (analysis.linguistic_patterns) {
             const ling = analysis.linguistic_patterns;
@@ -270,74 +427,7 @@ function displayTextResults(result) {
                 </div>
             `;
         }
-        
-        // Gemini AI Analysis - Dedicated Section
-        if (analysis.gemini_analysis && analysis.gemini_analysis.status === 'success') {
-            const gemini = analysis.gemini_analysis;
-            const verdictClass = getVerdictClass(gemini.fake_news_verdict);
-            
-            analysisHTML += `
-                <div class="analysis-section gemini-section">
-                    <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                    
-                    <div class="verdict-card">
-                        <div class="verdict-header">
-                            <h5><i class="fas fa-gavel"></i> AI Verdict</h5>
-                        </div>
-                        <div class="verdict-content">
-                            <div class="verdict-badge ${verdictClass}">
-                                ${gemini.fake_news_verdict || 'UNKNOWN'}
-                            </div>
-                            <div class="confidence-meter">
-                                <span class="confidence-label">Confidence: ${gemini.confidence || 0}%</span>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" style="width: ${gemini.confidence || 0}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="analysis-grid">
-                        <div class="analysis-item">
-                            <span>AI Risk Level:</span>
-                            <span class="badge ${gemini.risk_level}">${gemini.risk_level}</span>
-                        </div>
-                        <div class="analysis-item">
-                            <span>Analysis Status:</span>
-                            <span class="badge success">Complete</span>
-                        </div>
-                    </div>
-                    
-                    <div class="ai-detailed-analysis">
-                        <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
-                        <div class="ai-analysis-text">
-                            ${gemini.analysis.replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else if (analysis.gemini_analysis && analysis.gemini_analysis.status === 'not_available') {
-            analysisHTML += `
-                <div class="analysis-section gemini-section">
-                    <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                    <div class="info-message">
-                        <i class="fas fa-cog"></i> <strong>Configuration Required</strong><br>
-                        Configure GEMINI_API_KEY to enable advanced AI-powered fake news detection with expert-level analysis and definitive verdicts.
-                    </div>
-                </div>
-            `;
-        } else if (analysis.gemini_analysis && analysis.gemini_analysis.status === 'error') {
-            analysisHTML += `
-                <div class="analysis-section gemini-section">
-                    <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i> <strong>Analysis Failed</strong><br>
-                        ${analysis.gemini_analysis.analysis}
-                    </div>
-                </div>
-            `;
-        }
-        
+
         // Sentiment analysis
         if (analysis.sentiment) {
             const sent = analysis.sentiment;
@@ -365,7 +455,7 @@ function displayTextResults(result) {
                 </div>
             `;
         }
-        
+
         // Fact check results
         if (analysis.fact_check) {
             const fact = analysis.fact_check;
@@ -389,7 +479,7 @@ function displayTextResults(result) {
                 </div>
             `;
         }
-        
+
         // News verification
         if (analysis.news_verification) {
             const news = analysis.news_verification;
@@ -418,9 +508,9 @@ function displayTextResults(result) {
             `;
         }
     }
-    
+
     document.getElementById('analysis-content').innerHTML = analysisHTML;
-    
+
     // Recommendations
     displayRecommendations(result.recommendations || []);
     showResults();
@@ -430,16 +520,16 @@ function displayImageResults(result) {
     // Risk assessment
     const deepfakeRisk = result.deepfake_risk || 'unknown';
     const riskLevel = getDeepfakeRiskLevel(deepfakeRisk);
-    
+
     document.getElementById('risk-badge').textContent = riskLevel.level;
     document.getElementById('risk-badge').className = `risk-badge ${riskLevel.className}`;
-    
+
     // Update risk meter
     const riskScore = riskLevel.score;
     const riskMeter = document.getElementById('risk-meter-fill');
     riskMeter.style.width = `${riskScore * 100}%`;
     riskMeter.className = `meter-fill ${riskLevel.className}`;
-    
+
     document.getElementById('scores').innerHTML = `
         <div class="score-item">
             <span class="score-label">Deepfake Risk:</span>
@@ -450,76 +540,44 @@ function displayImageResults(result) {
             <span class="score-value">${result.status}</span>
         </div>
     `;
-    
+
     // Analysis details
     let analysisHTML = '';
-    
-    // Gemini AI Analysis - Prominent Display (same as text analysis)
+
     if (result.ai_analysis) {
-        const riskClass = getVerdictClass(result.deepfake_risk);
-        
+        // Show AI analysis with proper formatting
+        const analysisStatus = result.status || 'unknown';
+        const riskBadgeClass = deepfakeRisk === 'high' ? 'verdict-high' :
+            deepfakeRisk === 'medium' ? 'verdict-moderate' :
+                deepfakeRisk === 'low' ? 'verdict-legitimate' : 'verdict-unknown';
+
         analysisHTML += `
             <div class="analysis-section gemini-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                
+                <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
                 <div class="verdict-card">
                     <div class="verdict-header">
-                        <h5><i class="fas fa-gavel"></i> AI Verdict</h5>
+                        <h5><i class="fas fa-gavel"></i> Authenticity Assessment</h5>
                     </div>
                     <div class="verdict-content">
-                        <div class="verdict-badge ${riskClass}">
-                            ${result.deepfake_risk ? result.deepfake_risk.toUpperCase() + ' RISK' : 'UNKNOWN'}
+                        <div class="verdict-badge ${riskBadgeClass}">
+                            ${deepfakeRisk.toUpperCase()} RISK
                         </div>
-                        <div class="confidence-meter">
-                            <span class="confidence-label">Analysis: Complete</span>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" style="width: 90%"></div>
-                            </div>
+                        <div class="analysis-status">
+                            <span class="badge ${analysisStatus === 'success' ? 'success' : analysisStatus === 'basic_analysis' ? 'medium' : 'error'}">
+                                ${analysisStatus === 'success' ? 'Full AI Analysis' :
+                analysisStatus === 'basic_analysis' ? 'Basic Analysis' : 'Analysis Error'}
+                            </span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="analysis-grid">
-                    <div class="analysis-item">
-                        <span>AI Risk Level:</span>
-                        <span class="badge ${result.deepfake_risk}">${result.deepfake_risk}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span>Analysis Status:</span>
-                        <span class="badge success">Complete</span>
-                    </div>
-                </div>
-                
                 <div class="ai-detailed-analysis">
                     <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
-                    <div class="ai-analysis-text">
-                        ${result.ai_analysis.replace(/\n/g, '<br>')}
-                    </div>
-                </div>
-            </div>
-        `;
-    } else if (result.status === 'basic_analysis') {
-        analysisHTML += `
-            <div class="analysis-section gemini-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                <div class="info-message">
-                    <i class="fas fa-cog"></i> <strong>Configuration Required</strong><br>
-                    Configure GEMINI_API_KEY to enable advanced AI-powered deepfake detection using Google Gemini Pro Vision with expert-level analysis and definitive verdicts.
-                </div>
-            </div>
-        `;
-    } else if (result.status === 'error') {
-        analysisHTML += `
-            <div class="analysis-section gemini-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Analysis Failed</strong><br>
-                    ${result.message || 'Unknown error occurred'}
+                    <div class="ai-analysis-text">${result.ai_analysis.replace(/\n/g, '<br>')}</div>
                 </div>
             </div>
         `;
     }
-    
+
     if (result.technical_analysis) {
         const tech = result.technical_analysis;
         analysisHTML += `
@@ -527,7 +585,7 @@ function displayImageResults(result) {
                 <h4><i class="fas fa-cogs"></i> Technical Analysis</h4>
                 <div class="analysis-grid">
         `;
-        
+
         if (tech.pil_analysis) {
             const pil = tech.pil_analysis;
             analysisHTML += `
@@ -549,7 +607,7 @@ function displayImageResults(result) {
                 </div>
             `;
         }
-        
+
         if (tech.opencv_analysis && !tech.opencv_analysis.error) {
             const cv = tech.opencv_analysis;
             analysisHTML += `
@@ -567,7 +625,7 @@ function displayImageResults(result) {
                 </div>
             `;
         }
-        
+
         analysisHTML += `
                 <div class="analysis-item">
                     <span>Quality Assessment:</span>
@@ -577,7 +635,7 @@ function displayImageResults(result) {
         </div>
         `;
     }
-    
+
     if (result.error) {
         analysisHTML += `
             <div class="analysis-section">
@@ -586,30 +644,28 @@ function displayImageResults(result) {
             </div>
         `;
     }
-    
+
     document.getElementById('analysis-content').innerHTML = analysisHTML;
-    
+
     // Recommendations
     displayRecommendations(result.recommendations || []);
     showResults();
 }
 
 function displayVideoResults(result) {
-    console.log('Video analysis result:', result); // Debug logging
-    
     // Risk assessment
     const deepfakeRisk = result.overall_deepfake_risk || 'unknown';
     const riskLevel = getDeepfakeRiskLevel(deepfakeRisk);
-    
+
     document.getElementById('risk-badge').textContent = riskLevel.level;
     document.getElementById('risk-badge').className = `risk-badge ${riskLevel.className}`;
-    
+
     // Update risk meter
     const riskScore = riskLevel.score;
     const riskMeter = document.getElementById('risk-meter-fill');
     riskMeter.style.width = `${riskScore * 100}%`;
     riskMeter.className = `meter-fill ${riskLevel.className}`;
-    
+
     document.getElementById('scores').innerHTML = `
         <div class="score-item">
             <span class="score-label">Overall Risk:</span>
@@ -628,89 +684,87 @@ function displayVideoResults(result) {
             <span class="score-value">${result.status || 'unknown'}</span>
         </div>
     `;
-    
+
     // Analysis details
     let analysisHTML = '';
-    
-    // Show status message if there's an error
-    if (result.status === 'error') {
-        analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-exclamation-triangle"></i> Analysis Status</h4>
-                <div class="error-message">
-                    <p><strong>Error:</strong> ${result.message || 'Unknown error occurred'}</p>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Gemini AI Analysis for Video - Prominent Display
+
+    // Show Gemini analysis if available
     if (result.gemini_analysis && result.gemini_analysis.status === 'success') {
         const gemini = result.gemini_analysis;
-        const verdictClass = getVerdictClass(gemini.risk_level);
-        
+        const riskLevel = gemini.risk_level || 'unknown';
+
         analysisHTML += `
             <div class="analysis-section gemini-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                
+                <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
                 <div class="verdict-card">
                     <div class="verdict-header">
-                        <h5><i class="fas fa-gavel"></i> AI Verdict</h5>
+                        <h5><i class="fas fa-gavel"></i> Deepfake Assessment</h5>
                     </div>
                     <div class="verdict-content">
-                        <div class="verdict-badge ${verdictClass}">
-                            ${gemini.risk_level ? gemini.risk_level.toUpperCase() + ' RISK' : 'UNKNOWN'}
-                        </div>
-                        <div class="confidence-meter">
-                            <span class="confidence-label">Video Analysis: Complete</span>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" style="width: 85%"></div>
-                            </div>
+                        <div class="verdict-badge verdict-${riskLevel.toLowerCase().replace(/\s+/g, '-')}">
+                            ${riskLevel.toUpperCase()} RISK
                         </div>
                     </div>
                 </div>
-                
-                <div class="analysis-grid">
-                    <div class="analysis-item">
-                        <span>AI Risk Assessment:</span>
-                        <span class="badge ${gemini.risk_level}">${gemini.risk_level}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span>Analysis Status:</span>
-                        <span class="badge success">Complete</span>
-                    </div>
-                </div>
-                
                 <div class="ai-detailed-analysis">
-                    <h6><i class="fas fa-microscope"></i> Detailed Analysis</h6>
-                    <div class="ai-analysis-text">
-                        ${gemini.analysis.replace(/\n/g, '<br>')}
-                    </div>
-                </div>
-            </div>
-        `;
-    } else if (result.gemini_analysis && result.gemini_analysis.status === 'not_available') {
-        analysisHTML += `
-            <div class="analysis-section gemini-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                <div class="info-message">
-                    <i class="fas fa-cog"></i> <strong>Configuration Required</strong><br>
-                    Configure GEMINI_API_KEY to enable advanced AI-powered deepfake detection with expert-level video analysis and definitive verdicts.
-                </div>
-            </div>
-        `;
-    } else if (result.gemini_analysis && result.gemini_analysis.status === 'error') {
-        analysisHTML += `
-            <div class="analysis-section gemini-section">
-                <h4><i class="fas fa-brain"></i> Gemini AI Expert Analysis</h4>
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Analysis Failed</strong><br>
-                    ${result.gemini_analysis.analysis}
+                    <h6><i class="fas fa-microscope"></i> AI Analysis</h6>
+                    <div class="ai-analysis-text">${gemini.analysis.replace(/\n/g, '<br>')}</div>
                 </div>
             </div>
         `;
     }
-    
+
+    // Frame Analysis Summary
+    if (result.frame_analyses && result.frame_analyses.length > 0) {
+        analysisHTML += `
+            <div class="analysis-section">
+                <h4><i class="fas fa-film"></i> Frame Analysis Summary</h4>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span>High Risk Frames:</span>
+                        <span class="badge ${result.high_risk_frames > 0 ? 'high' : 'low'}">${result.high_risk_frames || 0}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Medium Risk Frames:</span>
+                        <span class="badge ${result.medium_risk_frames > 0 ? 'medium' : 'low'}">${result.medium_risk_frames || 0}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Low Risk Frames:</span>
+                        <span class="badge low">${result.low_risk_frames || 0}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Total Analyzed:</span>
+                        <span>${result.frames_analyzed || 0}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Show individual frame analyses
+        result.frame_analyses.slice(0, 3).forEach((frame, index) => {
+            const frameRisk = frame.deepfake_risk || 'unknown';
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-image"></i> Frame ${index + 1} Analysis</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Risk Level:</span>
+                            <span class="badge ${frameRisk}">${frameRisk}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Timestamp:</span>
+                            <span>${frame.timestamp ? frame.timestamp.toFixed(2) + 's' : 'N/A'}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge ${frame.status === 'success' ? 'success' : 'error'}">${frame.status || 'unknown'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
     if (result.video_properties) {
         const props = result.video_properties;
         analysisHTML += `
@@ -733,142 +787,77 @@ function displayVideoResults(result) {
             </div>
         `;
     }
-    
-    // Frame analysis breakdown
-    if (result.frames_analyzed > 0) {
+
+    if (result.error) {
         analysisHTML += `
             <div class="analysis-section">
-                <h4><i class="fas fa-images"></i> Frame Analysis Summary</h4>
-                <div class="analysis-grid">
-                    <div class="analysis-item">
-                        <span>Total Frames Analyzed:</span>
-                        <span>${result.frames_analyzed}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span>High Risk Frames:</span>
-                        <span class="badge high">${result.high_risk_frames || 0}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span>Medium Risk Frames:</span>
-                        <span class="badge medium">${result.medium_risk_frames || 0}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span>Low Risk Frames:</span>
-                        <span class="badge low">${result.low_risk_frames || 0}</span>
-                    </div>
-                </div>
-                <p>Analyzed ${result.frames_analyzed} sample frames for deepfake indicators.</p>
+                <h4><i class="fas fa-exclamation-triangle"></i> Note</h4>
+                <p>${result.message || result.error}</p>
             </div>
         `;
     }
-    
-    // Show individual frame analyses if available
-    if (result.frame_analyses && result.frame_analyses.length > 0) {
-        analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-microscope"></i> Sample Frame Details</h4>
-        `;
-        
-        result.frame_analyses.forEach((frameAnalysis, index) => {
-            analysisHTML += `
-                <div class="frame-analysis">
-                    <h5>Frame ${index + 1}</h5>
-                    <div class="analysis-item">
-                        <span>Risk Level:</span>
-                        <span class="badge ${frameAnalysis.deepfake_risk}">${frameAnalysis.deepfake_risk}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span>Status:</span>
-                        <span>${frameAnalysis.status}</span>
-                    </div>
-                </div>
-            `;
-        });
-        
-        analysisHTML += `</div>`;
-    }
-    
-    // If no analysis content, show a message
-    if (!analysisHTML) {
-        analysisHTML = `
-            <div class="analysis-section">
-                <h4><i class="fas fa-info-circle"></i> Analysis Information</h4>
-                <p>No detailed analysis data available. This may be due to video processing limitations or API configuration.</p>
-            </div>
-        `;
-    }
-    
+
     document.getElementById('analysis-content').innerHTML = analysisHTML;
-    
+
     // Recommendations
-    displayRecommendations(result.recommendations || ['No recommendations available']);
+    displayRecommendations(result.recommendations || []);
     showResults();
 }
 
-function displayRecommendations(recommendations) {
-    const list = document.getElementById('recommendations-list');
-    list.innerHTML = '';
-    
-    recommendations.forEach(rec => {
-        const li = document.createElement('li');
-        li.innerHTML = rec; // Use innerHTML to support emojis and formatting
-        list.appendChild(li);
-    });
-}
-
+// Helper functions
 function getRiskLevel(score) {
-    if (score > 0.7) {
-        return { level: 'High Risk', className: 'risk-high', score: score };
-    } else if (score > 0.4) {
+    if (score < 0.3) {
+        return { level: 'Low Risk', className: 'risk-low', score: score };
+    } else if (score < 0.7) {
         return { level: 'Moderate Risk', className: 'risk-moderate', score: score };
     } else {
-        return { level: 'Low Risk', className: 'risk-low', score: score };
+        return { level: 'High Risk', className: 'risk-high', score: score };
     }
 }
 
 function getDeepfakeRiskLevel(risk) {
     switch (risk.toLowerCase()) {
-        case 'high':
-            return { level: 'High Risk', className: 'risk-high', score: 0.8 };
-        case 'medium':
-            return { level: 'Moderate Risk', className: 'risk-moderate', score: 0.5 };
         case 'low':
             return { level: 'Low Risk', className: 'risk-low', score: 0.2 };
+        case 'medium':
+        case 'moderate':
+            return { level: 'Medium Risk', className: 'risk-moderate', score: 0.5 };
+        case 'high':
+            return { level: 'High Risk', className: 'risk-high', score: 0.8 };
         default:
-            return { level: 'Unknown', className: 'risk-unknown', score: 0.5 };
+            return { level: 'Unknown', className: 'risk-unknown', score: 0.0 };
     }
 }
 
-function getVerdictClass(verdict) {
-    if (!verdict) return 'verdict-unknown';
-    
-    const verdictUpper = verdict.toUpperCase();
-    
-    // Handle fake news verdicts
-    if (verdictUpper === 'FAKE NEWS') return 'verdict-fake';
-    if (verdictUpper === 'MODERATELY FAKE') return 'verdict-moderate';
-    if (verdictUpper === 'LEGITIMATE') return 'verdict-legitimate';
-    
-    // Handle risk levels for images/videos
-    if (verdictUpper === 'HIGH' || verdictUpper === 'HIGH RISK') return 'verdict-fake';
-    if (verdictUpper === 'MEDIUM' || verdictUpper === 'MODERATE' || verdictUpper === 'MEDIUM RISK') return 'verdict-moderate';
-    if (verdictUpper === 'LOW' || verdictUpper === 'LOW RISK') return 'verdict-legitimate';
-    
-    return 'verdict-unknown';
+function displayRecommendations(recommendations) {
+    const list = document.getElementById('recommendations-list');
+    list.innerHTML = '';
+
+    if (recommendations.length === 0) {
+        list.innerHTML = '<li>No specific recommendations available.</li>';
+        return;
+    }
+
+    recommendations.forEach(rec => {
+        const li = document.createElement('li');
+        li.textContent = rec;
+        list.appendChild(li);
+    });
 }
 
-// UI state management
+// Loading states
 function setTextLoading(loading) {
     const btn = document.getElementById('analyze-text-btn');
     const text = document.getElementById('text-btn-text');
     const spinner = document.getElementById('text-spinner');
-    
-    btn.disabled = loading;
+
     if (loading) {
-        text.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        btn.disabled = true;
+        text.classList.add('hidden');
         spinner.classList.remove('hidden');
     } else {
-        text.innerHTML = '<i class="fas fa-search"></i> Analyze for Misinformation';
+        btn.disabled = false;
+        text.classList.remove('hidden');
         spinner.classList.add('hidden');
     }
 }
@@ -877,13 +866,14 @@ function setImageLoading(loading) {
     const btn = document.getElementById('analyze-image-btn');
     const text = document.getElementById('image-btn-text');
     const spinner = document.getElementById('image-spinner');
-    
-    btn.disabled = loading || !selectedImageFile;
+
     if (loading) {
-        text.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        btn.disabled = true;
+        text.classList.add('hidden');
         spinner.classList.remove('hidden');
     } else {
-        text.innerHTML = '<i class="fas fa-search"></i> Analyze for Deepfakes';
+        btn.disabled = !selectedImageFile;
+        text.classList.remove('hidden');
         spinner.classList.add('hidden');
     }
 }
@@ -892,20 +882,23 @@ function setVideoLoading(loading) {
     const btn = document.getElementById('analyze-video-btn');
     const text = document.getElementById('video-btn-text');
     const spinner = document.getElementById('video-spinner');
-    
-    btn.disabled = loading || !selectedVideoFile;
+
     if (loading) {
-        text.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        btn.disabled = true;
+        text.classList.add('hidden');
         spinner.classList.remove('hidden');
     } else {
-        text.innerHTML = '<i class="fas fa-search"></i> Analyze for Deepfakes';
+        btn.disabled = !selectedVideoFile;
+        text.classList.remove('hidden');
         spinner.classList.add('hidden');
     }
 }
 
+// Error handling
 function showError(message) {
     const errorDiv = document.getElementById('error-message');
     const errorText = document.getElementById('error-text');
+
     errorText.textContent = message;
     errorDiv.classList.remove('hidden');
 }
@@ -914,68 +907,39 @@ function hideError() {
     document.getElementById('error-message').classList.add('hidden');
 }
 
+// Results display
 function showResults() {
     document.getElementById('results').classList.remove('hidden');
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 }
 
 function hideResults() {
     document.getElementById('results').classList.add('hidden');
 }
 
-// Export results
+// Export functionality
 function exportResults() {
-    const results = document.getElementById('results');
-    const data = {
+    // Get current results
+    const results = {
         timestamp: new Date().toISOString(),
-        risk_assessment: document.getElementById('risk-badge').textContent,
-        analysis: document.getElementById('analysis-content').textContent,
-        recommendations: Array.from(document.getElementById('recommendations-list').children).map(li => li.textContent)
+        risk_assessment: {
+            level: document.getElementById('risk-badge').textContent,
+            scores: Array.from(document.querySelectorAll('.score-item')).map(item => ({
+                label: item.querySelector('.score-label').textContent,
+                value: item.querySelector('.score-value').textContent
+            }))
+        },
+        analysis_details: document.getElementById('analysis-content').innerText,
+        recommendations: Array.from(document.querySelectorAll('#recommendations-list li')).map(li => li.textContent)
     };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+    // Create and download JSON file
+    const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `misinformation-analysis-${Date.now()}.json`;
+    a.download = `misinformation-analysis-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
-
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key === 'Enter') {
-        const activeTab = document.querySelector('.tab-content.active');
-        if (activeTab.id === 'text-tab') {
-            analyzeText();
-        } else if (activeTab.id === 'image-tab' && selectedImageFile) {
-            analyzeImage();
-        } else if (activeTab.id === 'video-tab' && selectedVideoFile) {
-            analyzeVideo();
-        }
-    }
-});
-
-// Test API connection
-async function testAPI() {
-    try {
-        const response = await fetch('/health');
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✅ API connection successful:', data);
-            document.getElementById('api-status').innerHTML = '✅ API Ready';
-        } else {
-            console.log('⚠️ API connection failed');
-            document.getElementById('api-status').innerHTML = '⚠️ API Connection Issues';
-        }
-    } catch (e) {
-        console.log('❌ API test error:', e);
-        document.getElementById('api-status').innerHTML = '❌ API Unavailable';
-    }
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('text-input').focus();
-    testAPI(); 
-})

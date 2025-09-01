@@ -60,6 +60,44 @@ async def root():
 async def health_check():
     return {"status": "healthy", "message": "AI Misinformation Detector is running"}
 
+@app.get("/api/status")
+async def get_api_status():
+    """Get the status of all configured APIs"""
+    try:
+        print("🔍 API Status endpoint called")
+        
+        if analyzer is None:
+            print("⚠️ Analyzer is None")
+            return {
+                "gemini_available": False,
+                "newsapi_available": False,
+                "factcheck_available": False,
+                "analyzer_ready": False
+            }
+        
+        # Check which APIs are configured
+        gemini_available = bool(os.getenv('GEMINI_API_KEY'))
+        newsapi_available = bool(os.getenv('NEWSAPI_KEY'))
+        factcheck_available = bool(os.getenv('FACTCHECK_API_KEY'))
+        
+        print(f"📊 API Status: Gemini={gemini_available}, News={newsapi_available}, FactCheck={factcheck_available}")
+        
+        return {
+            "gemini_available": gemini_available,
+            "newsapi_available": newsapi_available,
+            "factcheck_available": factcheck_available,
+            "analyzer_ready": True
+        }
+    except Exception as e:
+        print(f"❌ Error in API status: {e}")
+        return {
+            "gemini_available": False,
+            "newsapi_available": False,
+            "factcheck_available": False,
+            "analyzer_ready": False,
+            "error": str(e)
+        }
+
 @app.post("/api/analyze-text")
 async def analyze_text(text: str = Form(...)):
     """Comprehensive text analysis for misinformation using multiple APIs"""
@@ -186,7 +224,23 @@ async def get_models():
 @app.get("/api/test")
 async def test_endpoint():
     """Simple test endpoint"""
-    return {"message": "API is working", "status": "ok"}
+    return {"message": "API is working", "status": "ok", "port": "8000"}
+
+@app.get("/debug")
+async def debug_info():
+    """Debug information endpoint"""
+    import sys
+    return {
+        "python_version": sys.version,
+        "analyzer_status": analyzer is not None,
+        "env_vars": {
+            "GEMINI_API_KEY": "Set" if os.getenv('GEMINI_API_KEY') else "Not set",
+            "NEWSAPI_KEY": "Set" if os.getenv('NEWSAPI_KEY') else "Not set", 
+            "FACTCHECK_API_KEY": "Set" if os.getenv('FACTCHECK_API_KEY') else "Not set"
+        },
+        "port": 8000,
+        "status": "running"
+    }
 
 if __name__ == "__main__":
     import uvicorn
