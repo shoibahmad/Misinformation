@@ -59,7 +59,7 @@ A comprehensive AI-powered tool for detecting misinformation, fake news, and dee
 
 4. **Run the application**
    ```bash
-   python start_server.py
+   python main.py
    ```
 
 5. **Access the web interface**
