@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Powered Misinformation & Deepfake Detection</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
+
 <body>
     <!-- Welcome Screen -->
     <div class="welcome-screen" id="welcome-screen">
@@ -32,15 +35,26 @@
 
     <div class="app-container" id="main-app" style="display: none;">
 
-        
+
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-shield-virus"></i>
-                    <h1>CyberGuard AI</h1>
+                <div class="header-left">
+                    <div class="logo">
+                        <i class="fas fa-shield-virus"></i>
+                        <h1>CyberGuard AI</h1>
+                    </div>
                 </div>
-                <p class="subtitle">Next-Generation Misinformation & Deepfake Detection</p>
+                <div class="header-right">
+                    <div class="nav-actions">
+                        <button class="action-btn" onclick="toggleHistoryDrawer()" title="Search History">
+                            <i class="fas fa-history"></i>
+                        </button>
+                        <button class="action-btn" onclick="exportResults()" title="Export Results">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -54,9 +68,9 @@
                         <h2>Choose Analysis Type</h2>
                         <p>Select the type of content you want to analyze for misinformation or manipulation</p>
                     </div>
-                    
+
                     <div class="analysis-options">
-                        <div class="analysis-option active" onclick="showTab('text')" data-tab="text">
+                        <div class="analysis-option active" onclick="showTab('text')" data-tab="text" data-shortcut="1">
                             <div class="option-icon">
                                 <i class="fas fa-newspaper"></i>
                             </div>
@@ -73,8 +87,8 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </div>
-                        
-                        <div class="analysis-option" onclick="showTab('image')" data-tab="image">
+
+                        <div class="analysis-option" onclick="showTab('image')" data-tab="image" data-shortcut="2">
                             <div class="option-icon">
                                 <i class="fas fa-image"></i>
                             </div>
@@ -91,8 +105,8 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </div>
-                        
-                        <div class="analysis-option" onclick="showTab('video')" data-tab="video">
+
+                        <div class="analysis-option" onclick="showTab('video')" data-tab="video" data-shortcut="3">
                             <div class="option-icon">
                                 <i class="fas fa-video"></i>
                             </div>
@@ -138,6 +152,11 @@
                                     <i class="fas fa-spinner fa-spin"></i>
                                 </div>
                             </button>
+
+                            <div class="input-help">
+                                <p><i class="fas fa-info-circle"></i> Tip: Press <kbd>Ctrl+Enter</kbd> to quickly
+                                    analyze your text</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,7 +176,8 @@
                             </label>
 
                             <div class="file-upload-zone" onclick="document.getElementById('image-input').click()">
-                                <input type="file" id="image-input" accept="image/*" onchange="handleImageSelect()" hidden>
+                                <input type="file" id="image-input" accept="image/*" onchange="handleImageSelect()"
+                                    hidden>
                                 <div id="upload-placeholder" class="upload-placeholder">
                                     <div class="upload-icon">
                                         <i class="fas fa-cloud-upload-alt"></i>
@@ -169,7 +189,8 @@
                                 <div id="image-preview" class="image-preview hidden"></div>
                             </div>
 
-                            <button id="analyze-image-btn" class="analyze-btn secondary" onclick="analyzeImage()" disabled>
+                            <button id="analyze-image-btn" class="analyze-btn secondary" onclick="analyzeImage()"
+                                disabled>
                                 <span id="image-btn-text">
                                     <i class="fas fa-search"></i>
                                     Analyze for Deepfakes
@@ -178,6 +199,11 @@
                                     <i class="fas fa-spinner fa-spin"></i>
                                 </div>
                             </button>
+
+                            <div class="input-help">
+                                <p><i class="fas fa-info-circle"></i> Supported formats: JPG, PNG, GIF, WebP • Max size:
+                                    10MB</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -197,7 +223,8 @@
                             </label>
 
                             <div class="file-upload-zone" onclick="document.getElementById('video-input').click()">
-                                <input type="file" id="video-input" accept="video/*" onchange="handleVideoSelect()" hidden>
+                                <input type="file" id="video-input" accept="video/*" onchange="handleVideoSelect()"
+                                    hidden>
                                 <div id="video-upload-placeholder" class="upload-placeholder">
                                     <div class="upload-icon">
                                         <i class="fas fa-video"></i>
@@ -209,7 +236,8 @@
                                 <div id="video-preview" class="video-preview hidden"></div>
                             </div>
 
-                            <button id="analyze-video-btn" class="analyze-btn tertiary" onclick="analyzeVideo()" disabled>
+                            <button id="analyze-video-btn" class="analyze-btn tertiary" onclick="analyzeVideo()"
+                                disabled>
                                 <span id="video-btn-text">
                                     <i class="fas fa-search"></i>
                                     Analyze for Deepfakes
@@ -218,12 +246,17 @@
                                     <i class="fas fa-spinner fa-spin"></i>
                                 </div>
                             </button>
+
+                            <div class="input-help">
+                                <p><i class="fas fa-info-circle"></i> Supported formats: MP4, AVI, MOV, WebM • Max size:
+                                    100MB</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Error Message -->
-                <div id="error-message" class="error-alert hidden">
+                <div id="error-message" class="error-alert hidden" style="display: none;">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span id="error-text"></span>
                     <button class="close-btn" onclick="hideError()">
@@ -303,8 +336,8 @@
                         <div class="api-item">
                             <i class="fas fa-newspaper"></i>
                             <div>
-                                <strong>NEWSAPI_KEY</strong>
-                                <p>NewsAPI for news verification and source checking</p>
+                                <strong>NEWSDATA_API_KEY</strong>
+                                <p>NewsData.io for news verification and source checking</p>
                             </div>
                         </div>
                         <div class="api-item">
@@ -377,11 +410,138 @@
                         API Docs
                     </a>
                 </div>
-                <p>&copy; 2024 AI Misinformation & Deepfake Detector. Built with FastAPI, Google Gemini Pro & Python.</p>
+                <p>&copy; 2024 AI Misinformation & Deepfake Detector. Built with FastAPI, Google Gemini Pro & Python.
+                </p>
             </div>
         </footer>
     </div>
 
+    <!-- Search History Drawer -->
+    <div id="history-drawer" class="history-drawer">
+        <div class="drawer-overlay" onclick="closeHistoryDrawer()"></div>
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3><i class="fas fa-history"></i> Search History</h3>
+                <button class="close-btn" onclick="closeHistoryDrawer()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="drawer-body">
+                <!-- History Filters -->
+                <div class="history-filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Type:</label>
+                            <select id="history-type-filter">
+                                <option value="">All Types</option>
+                                <option value="text">Text Analysis</option>
+                                <option value="image">Image Analysis</option>
+                                <option value="video">Video Analysis</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Risk Level:</label>
+                            <select id="history-risk-filter">
+                                <option value="">All Levels</option>
+                                <option value="low">Low Risk (0-30%)</option>
+                                <option value="medium">Medium Risk (30-70%)</option>
+                                <option value="high">High Risk (70-100%)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>
+                                <input type="checkbox" id="favorites-only"> Favorites Only
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button class="btn btn-primary btn-sm" onclick="loadHistory()">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                        
+                        <button class="btn btn-secondary btn-sm" onclick="clearHistoryFilters()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                        
+                        <button class="btn btn-info btn-sm" onclick="toggleHistoryStats()">
+                            <i class="fas fa-chart-bar"></i> Stats
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- History Statistics -->
+                <div id="history-stats" class="history-stats hidden">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-searches">0</span>
+                            <span class="stat-label">Total Searches</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="recent-activity">0</span>
+                            <span class="stat-label">Last 7 Days</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="high-risk-count">0</span>
+                            <span class="stat-label">High Risk</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History List -->
+                <div id="history-list" class="history-list">
+                    <div class="loading-spinner hidden" id="history-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Loading history...</span>
+                    </div>
+                    
+                    <div id="history-items"></div>
+                    
+                    <div id="no-history" class="no-history hidden">
+                        <i class="fas fa-history"></i>
+                        <h4>No Search History</h4>
+                        <p>Your analysis history will appear here after you perform searches.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="drawer-footer">
+                <button class="btn btn-danger btn-sm" onclick="confirmClearHistory()">
+                    <i class="fas fa-trash"></i> Clear All History
+                </button>
+                <button class="btn btn-secondary" onclick="closeHistoryDrawer()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Details Modal -->
+    <div id="search-details-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Search Details</h3>
+                <button class="close-btn" onclick="closeSearchDetails()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="search-details-content"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSearchDetails()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/script.js"></script>
 </body>
+
 </html>

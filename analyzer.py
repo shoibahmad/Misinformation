@@ -19,9 +19,9 @@ class MisinformationAnalyzer:
     def __init__(self):
         """Initialize the analyzer with API configurations"""
         # API Keys - Replace with your actual keys
-        self.newsapi_key = os.getenv('NEWSAPI_KEY', '1aef5e04e84643a889ba8e0f377e196b')
-        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyBY1HIARwAN_6Rxu8Ww-sQ0hn87L6wOUIw')  # Use proper Google Cloud API key
-        self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyDMbXrwaTcFOB2b5ePT2o1EGq5OCmsIFQY')
+        self.newsdata_api_key = os.getenv('NEWSDATA_API_KEY', 'pub_e0fdf336c7c34b06a72f63cc14d675a8')
+        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyAouVSfu1BO_oYrOIOXoMuegrf3Oj1ceqk')  # Use proper Google Cloud API key
+        self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyD3adGsM5dxI_OytL68ePc4eeQRwrpwx80')
         
         # Configure Google Gemini
         if self.gemini_api_key and len(self.gemini_api_key) > 20:
@@ -384,42 +384,43 @@ class MisinformationAnalyzer:
     async def _verify_with_news_apis(self, text: str) -> Dict[str, Any]:
         """Verify information using NewsAPI"""
         try:
-            if (not self.newsapi_key or 
-                self.newsapi_key == 'YOUR_NEWSAPI_KEY_HERE' or
-                self.newsapi_key.strip() == ''):
+            if (not self.newsdata_api_key or 
+                self.newsdata_api_key == 'YOUR_NEWSDATA_API_KEY_HERE' or
+                self.newsdata_api_key.strip() == ''):
                 return {
                     'status': 'API key not configured', 
                     'total_articles': 0,
                     'reliable_sources': 0,
                     'reliability_ratio': 0,
                     'top_articles': [],
-                    'message': 'NewsAPI key not configured'
+                    'message': 'NewsData.io API key not configured'
                 }
             
             # Extract key terms for search
             words = text.split()[:10]  # Use first 10 words
             query = ' '.join(words)
             
-            url = "https://newsapi.org/v2/everything"
+            url = "https://newsdata.io/api/1/news"
             params = {
-                'apiKey': self.newsapi_key,
+                'apikey': self.newsdata_api_key,
                 'q': query,
-                'sortBy': 'relevancy',
-                'pageSize': 5,
-                'language': 'en'
+                'language': 'en',
+                'size': 5,
+                'prioritydomain': 'top'
             }
             
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
                     if response.status == 200:
                         data = await response.json()
-                        articles = data.get('articles', [])
+                        articles = data.get('results', [])
                         
                         # Check source reliability
                         reliable_count = 0
                         for article in articles:
-                            source_url = article.get('url', '')
-                            if any(reliable in source_url for reliable in self.reliable_sources):
+                            source_url = article.get('link', '')
+                            source_name = article.get('source_id', '')
+                            if any(reliable in source_url or reliable in source_name for reliable in self.reliable_sources):
                                 reliable_count += 1
                         
                         return {
@@ -432,7 +433,7 @@ class MisinformationAnalyzer:
                     elif response.status == 401:
                         return {
                             'status': 'error', 
-                            'message': 'Invalid NewsAPI key',
+                            'message': 'Invalid NewsData.io API key',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -441,7 +442,7 @@ class MisinformationAnalyzer:
                     elif response.status == 429:
                         return {
                             'status': 'error', 
-                            'message': 'NewsAPI rate limit exceeded',
+                            'message': 'NewsData.io rate limit exceeded',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -450,7 +451,7 @@ class MisinformationAnalyzer:
                     else:
                         return {
                             'status': 'error', 
-                            'message': f'NewsAPI returned status {response.status}',
+                            'message': f'NewsData.io returned status {response.status}',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -459,7 +460,7 @@ class MisinformationAnalyzer:
         except Exception as e:
             return {
                 'status': 'error', 
-                'message': f'NewsAPI error: {str(e)}',
+                'message': f'NewsData.io error: {str(e)}',
                 'total_articles': 0,
                 'reliable_sources': 0,
                 'reliability_ratio': 0,
@@ -709,11 +710,28 @@ class MisinformationAnalyzer:
             technical_analysis = self._analyze_image_technical(image_path)
             
             print("✅ Gemini analysis completed successfully")
+            
+            # Calculate risk and convert to expected format
+            risk_assessment = self._calculate_deepfake_risk_detailed(response.text, technical_analysis)
+            
+            # Parse Gemini response for structured analysis
+            gemini_analysis = self._parse_gemini_image_analysis(response.text)
+            
             return {
-                'status': 'success',
-                'ai_analysis': response.text,
-                'technical_analysis': technical_analysis,
-                'deepfake_risk': self._calculate_deepfake_risk(response.text, technical_analysis),
+                'deepfake_score': risk_assessment['score'],
+                'confidence': risk_assessment['confidence'],
+                'analysis': {
+                    'gemini_analysis': {
+                        'status': 'success',
+                        'deepfake_verdict': gemini_analysis.get('verdict', 'UNKNOWN'),
+                        'confidence': int(risk_assessment['confidence'] * 100),
+                        'analysis': response.text,
+                        'evidence': gemini_analysis.get('evidence', []),
+                        'reasoning': gemini_analysis.get('reasoning', '')
+                    },
+                    'technical_analysis': technical_analysis,
+                    'image_properties': self._get_image_properties(image_path)
+                },
                 'recommendations': self._generate_image_recommendations(response.text)
             }
             
@@ -729,13 +747,25 @@ class MisinformationAnalyzer:
             # Perform basic risk assessment based on technical analysis
             basic_risk = self._calculate_basic_image_risk(technical_analysis)
             
+            # Convert basic risk to expected format
+            risk_map = {'low': 0.2, 'medium': 0.5, 'high': 0.8}
+            deepfake_score = risk_map.get(basic_risk, 0.3)
+            
             return {
-                'status': 'basic_analysis',
-                'error': error,
-                'technical_analysis': technical_analysis,
-                'deepfake_risk': basic_risk,
-                'ai_analysis': 'Basic technical analysis performed. Configure GEMINI_API_KEY for advanced AI-powered deepfake detection using Google Gemini Pro Vision.',
-                'message': 'Advanced AI analysis unavailable. Configure GEMINI_API_KEY for full analysis.',
+                'deepfake_score': deepfake_score,
+                'confidence': 0.6,  # Lower confidence for basic analysis
+                'analysis': {
+                    'gemini_analysis': {
+                        'status': 'unavailable',
+                        'deepfake_verdict': 'ANALYSIS UNAVAILABLE',
+                        'confidence': 60,
+                        'analysis': 'Basic technical analysis performed. Configure GEMINI_API_KEY for advanced AI-powered deepfake detection using Google Gemini Pro Vision.',
+                        'evidence': ['Technical analysis only - no AI verdict available'],
+                        'reasoning': 'Gemini API not configured'
+                    },
+                    'technical_analysis': technical_analysis,
+                    'image_properties': self._get_image_properties(image_path)
+                },
                 'recommendations': [
                     "🔧 Configure Google Gemini API for advanced analysis",
                     "👁️ Manually inspect image for inconsistencies",
@@ -781,6 +811,52 @@ class MisinformationAnalyzer:
             }
         except Exception as e:
             return {'error': str(e)}
+
+    def _calculate_deepfake_risk_detailed(self, ai_analysis: str, technical_analysis: Dict) -> Dict[str, float]:
+        """Calculate deepfake risk with score and confidence for frontend"""
+        risk_score = 0.0
+        confidence = 0.7  # Base confidence
+        
+        # Parse AI analysis verdict more accurately
+        analysis_lower = ai_analysis.lower()
+        
+        # Check for explicit verdicts first
+        if 'definitely fake' in analysis_lower or 'clearly manipulated' in analysis_lower:
+            risk_score = 0.9
+            confidence = 0.95
+        elif 'likely manipulated' in analysis_lower or 'probably fake' in analysis_lower:
+            risk_score = 0.7
+            confidence = 0.8
+        elif 'authentic' in analysis_lower or 'genuine' in analysis_lower or 'real' in analysis_lower:
+            risk_score = 0.1
+            confidence = 0.85
+        elif 'possibly manipulated' in analysis_lower:
+            risk_score = 0.5
+            confidence = 0.6
+        else:
+            # Default moderate risk if unclear
+            risk_score = 0.3
+            confidence = 0.5
+        
+        # Adjust based on technical analysis
+        opencv_analysis = technical_analysis.get('opencv_analysis', {})
+        sharpness = opencv_analysis.get('sharpness', 100)
+        
+        # Adjust confidence based on image quality
+        if sharpness < 30:  # Very blurry
+            confidence *= 0.8
+            risk_score += 0.1
+        elif sharpness > 80:  # Very sharp
+            confidence *= 1.1
+        
+        # Ensure values are in valid range
+        risk_score = max(0.0, min(1.0, risk_score))
+        confidence = max(0.0, min(1.0, confidence))
+        
+        return {
+            'score': risk_score,
+            'confidence': confidence
+        }
 
     def _calculate_deepfake_risk(self, ai_analysis: str, technical_analysis: Dict) -> str:
         """Calculate deepfake risk based on AI and technical analysis - more conservative approach"""
@@ -868,6 +944,59 @@ class MisinformationAnalyzer:
             recommendations.append("❌ Avoid sharing without verification")
         
         return recommendations
+    
+    def _parse_gemini_image_analysis(self, analysis_text: str) -> Dict[str, Any]:
+        """Parse Gemini analysis text to extract structured information"""
+        analysis_lower = analysis_text.lower()
+        
+        # Extract verdict
+        verdict = 'UNKNOWN'
+        if 'definitely fake' in analysis_lower or 'clearly manipulated' in analysis_lower:
+            verdict = 'DEFINITELY FAKE'
+        elif 'likely manipulated' in analysis_lower or 'probably fake' in analysis_lower:
+            verdict = 'LIKELY MANIPULATED'
+        elif 'authentic' in analysis_lower or 'genuine' in analysis_lower or 'real' in analysis_lower:
+            verdict = 'AUTHENTIC'
+        elif 'possibly manipulated' in analysis_lower:
+            verdict = 'POSSIBLY MANIPULATED'
+        
+        # Extract evidence (look for bullet points or listed items)
+        evidence = []
+        lines = analysis_text.split('\n')
+        for line in lines:
+            line = line.strip()
+            if line.startswith('•') or line.startswith('-') or line.startswith('*'):
+                evidence.append(line[1:].strip())
+            elif 'evidence:' in line.lower():
+                evidence.append(line.split(':', 1)[1].strip())
+        
+        # Extract reasoning (look for reasoning section)
+        reasoning = ''
+        for line in lines:
+            if 'reasoning:' in line.lower():
+                reasoning = line.split(':', 1)[1].strip()
+                break
+        
+        return {
+            'verdict': verdict,
+            'evidence': evidence[:5],  # Limit to 5 evidence points
+            'reasoning': reasoning
+        }
+    
+    def _get_image_properties(self, image_path: str) -> Dict[str, Any]:
+        """Get basic image properties"""
+        try:
+            image = Image.open(image_path)
+            return {
+                'format': image.format,
+                'mode': image.mode,
+                'size': image.size,
+                'width': image.width,
+                'height': image.height,
+                'has_transparency': image.mode in ('RGBA', 'LA') or 'transparency' in image.info
+            }
+        except Exception as e:
+            return {'error': str(e)}
 
     async def analyze_video_deepfake(self, video_path: str) -> Dict[str, Any]:
         """Analyze video for deepfakes with Gemini AI integration"""
@@ -939,28 +1068,31 @@ class MisinformationAnalyzer:
             
             print(f"✅ Completed analysis of {len(frame_analyses)} frames")
             
-            # Aggregate results
-            high_risk_frames = sum(1 for analysis in frame_analyses 
-                                 if analysis.get('deepfake_risk') == 'high')
-            medium_risk_frames = sum(1 for analysis in frame_analyses 
-                                   if analysis.get('deepfake_risk') == 'medium')
-            low_risk_frames = sum(1 for analysis in frame_analyses 
-                                if analysis.get('deepfake_risk') == 'low')
-            
-            # Calculate overall risk based on frame analysis - more conservative
+            # Aggregate results - now using deepfake_score
             total_frames = len(frame_analyses)
             if total_frames == 0:
-                overall_risk = 'unknown'
+                overall_score = 0.5
+                overall_confidence = 0.3
                 print("⚠️ No frames were successfully analyzed")
-            elif high_risk_frames >= (total_frames * 0.8):  # 80% of frames must be high risk
-                overall_risk = 'high'
-                print(f"🚨 High risk detected: {high_risk_frames}/{total_frames} frames")
-            elif high_risk_frames >= (total_frames * 0.5):  # 50% of frames must be high risk for medium
-                overall_risk = 'medium'
-                print(f"⚡ Medium risk detected: {high_risk_frames}/{total_frames} frames")
             else:
-                overall_risk = 'low'
-                print(f"✅ Low risk detected: {low_risk_frames}/{total_frames} frames")
+                # Calculate average deepfake score from all frames
+                scores = [analysis.get('deepfake_score', 0.3) for analysis in frame_analyses]
+                confidences = [analysis.get('confidence', 0.5) for analysis in frame_analyses]
+                
+                overall_score = sum(scores) / len(scores)
+                overall_confidence = sum(confidences) / len(confidences)
+                
+                # Count risk levels for logging
+                high_risk_frames = sum(1 for score in scores if score > 0.7)
+                medium_risk_frames = sum(1 for score in scores if 0.3 <= score <= 0.7)
+                low_risk_frames = sum(1 for score in scores if score < 0.3)
+                
+                if overall_score > 0.7:
+                    print(f"🚨 High risk detected: {high_risk_frames}/{total_frames} frames")
+                elif overall_score > 0.3:
+                    print(f"⚡ Medium risk detected: {medium_risk_frames}/{total_frames} frames")
+                else:
+                    print(f"✅ Low risk detected: {low_risk_frames}/{total_frames} frames")
             
             # Perform Gemini AI analysis on the overall video
             print("🧠 Running Gemini AI video analysis...")
@@ -968,23 +1100,34 @@ class MisinformationAnalyzer:
             print(f"✅ Gemini video analysis completed")
             
             result = {
-                'status': 'success',
-                'video_properties': {
-                    'duration': duration,
-                    'fps': fps,
-                    'frame_count': frame_count
-                },
+                'deepfake_score': overall_score,
+                'confidence': overall_confidence,
                 'frames_analyzed': total_frames,
-                'high_risk_frames': high_risk_frames,
-                'medium_risk_frames': medium_risk_frames,
-                'low_risk_frames': low_risk_frames,
-                'overall_deepfake_risk': overall_risk,
-                'gemini_analysis': gemini_video_analysis,
-                'frame_analyses': frame_analyses[:3],  # Return first 3 for brevity
-                'recommendations': self._generate_video_recommendations(overall_risk, gemini_video_analysis)
+                'analysis': {
+                    'gemini_analysis': {
+                        'status': gemini_video_analysis.get('status', 'success'),
+                        'deepfake_verdict': gemini_video_analysis.get('verdict', 'ANALYSIS COMPLETED'),
+                        'confidence': int(overall_confidence * 100),
+                        'analysis': gemini_video_analysis.get('analysis', 'Video analysis completed'),
+                        'evidence': gemini_video_analysis.get('evidence', []),
+                        'reasoning': gemini_video_analysis.get('reasoning', 'Frame-by-frame analysis performed')
+                    },
+                    'frame_analysis': {
+                        'total_frames': total_frames,
+                        'frames_analyzed': len(frame_analyses),
+                        'average_score': overall_score,
+                        'score_distribution': self._get_score_distribution(frame_analyses)
+                    },
+                    'video_properties': {
+                        'duration': duration,
+                        'fps': fps,
+                        'frame_count': frame_count
+                    }
+                },
+                'recommendations': self._generate_video_recommendations_new(overall_score, gemini_video_analysis)
             }
             
-            print(f"📋 Final result: {overall_risk} risk, {total_frames} frames analyzed")
+            print(f"📋 Final result: {overall_score:.2f} score, {total_frames} frames analyzed")
             return result
             
         except Exception as e:
@@ -1097,6 +1240,56 @@ class MisinformationAnalyzer:
                 "🔧 Try with a different video format",
                 "📱 Ensure video is not corrupted"
             ] + base_recommendations
+    
+    def _generate_video_recommendations_new(self, deepfake_score: float, gemini_analysis: Dict) -> List[str]:
+        """Generate recommendations based on video deepfake score"""
+        recommendations = []
+        
+        if deepfake_score > 0.7:
+            recommendations.extend([
+                "🚨 High deepfake probability detected - exercise extreme caution",
+                "🔍 Verify the source and authenticity of this video",
+                "📱 Cross-reference with other reliable sources",
+                "👥 Consult with digital forensics experts if needed"
+            ])
+        elif deepfake_score > 0.4:
+            recommendations.extend([
+                "⚠️ Moderate manipulation indicators found",
+                "🔍 Perform additional verification checks",
+                "📊 Compare with known authentic videos of the subject",
+                "🔎 Look for inconsistencies in facial movements"
+            ])
+        else:
+            recommendations.extend([
+                "✅ Low probability of deepfake manipulation",
+                "👁️ Continue normal verification practices",
+                "📋 Document source and context for records"
+            ])
+        
+        # Add technical recommendations
+        recommendations.extend([
+            "🎬 Analyze frame-by-frame for inconsistencies",
+            "🔊 Check audio-visual synchronization",
+            "📈 Examine compression artifacts and quality",
+            "🔍 Use reverse video search tools"
+        ])
+        
+        return recommendations
+    
+    def _get_score_distribution(self, frame_analyses: List[Dict]) -> Dict[str, int]:
+        """Get distribution of deepfake scores across frames"""
+        if not frame_analyses:
+            return {'low': 0, 'medium': 0, 'high': 0}
+        
+        low_count = sum(1 for analysis in frame_analyses if analysis.get('deepfake_score', 0.3) < 0.3)
+        medium_count = sum(1 for analysis in frame_analyses if 0.3 <= analysis.get('deepfake_score', 0.3) <= 0.7)
+        high_count = sum(1 for analysis in frame_analyses if analysis.get('deepfake_score', 0.3) > 0.7)
+        
+        return {
+            'low': low_count,
+            'medium': medium_count,
+            'high': high_count
+        }
 
     # Legacy methods for backward compatibility
     async def analyze_text(self, text: str, check_sources: bool = True, analyze_sentiment: bool = True) -> Dict[str, Any]:
