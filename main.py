@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
@@ -9,9 +9,8 @@ import base64
 from typing import Dict, Any, Optional
 import asyncio
 
-# Import our analyzer and database
+# Import our analyzer
 from analyzer import MisinformationAnalyzer
-from database import SearchHistoryDB
 
 app = FastAPI(
     title="AI-Powered Misinformation & Deepfake Detection Tool",
@@ -31,20 +30,13 @@ app.add_middleware(
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Initialize analyzer and database
+# Initialize analyzer (database removed)
 try:
     analyzer = MisinformationAnalyzer()
     print("✅ Analyzer initialized successfully")
 except Exception as e:
     print(f"⚠️ Warning: Analyzer initialization failed: {e}")
     analyzer = None
-
-try:
-    db = SearchHistoryDB()
-    print("✅ Database initialized successfully")
-except Exception as e:
-    print(f"⚠️ Warning: Database initialization failed: {e}")
-    db = None
 
 # Pydantic models
 class TextAnalysisRequest(BaseModel):
@@ -63,6 +55,11 @@ class TextAnalysisResponse(BaseModel):
 async def root():
     """Serve the main HTML page"""
     return FileResponse("static/index.html")
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return empty response for favicon"""
+    return Response(status_code=204)
 
 @app.get("/health")
 async def health_check():
@@ -106,179 +103,7 @@ async def get_api_status():
             "error": str(e)
         }
 
-# Search History Endpoints
-@app.get("/history")
-async def get_search_history(
-    type: Optional[str] = None,
-    min_risk: Optional[float] = None,
-    max_risk: Optional[float] = None,
-    favorites: Optional[bool] = None,
-    limit: int = 50
-):
-    """Get search history with optional filters"""
-    try:
-        if db is None:
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        history = db.get_search_history(
-            limit=limit,
-            analysis_type=type,
-            min_risk=min_risk,
-            max_risk=max_risk,
-            favorites_only=favorites or False
-        )
-        
-        return {"status": "success", "history": history}
-    except Exception as e:
-        print(f"Error getting history: {e}")
-        return {"status": "error", "error": str(e)}
-
-@app.get("/history/statistics")
-async def get_history_statistics():
-    """Get search history statistics"""
-    try:
-        print("📊 Statistics endpoint called")
-        if db is None:
-            print("❌ Database is None")
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        print("🔍 Getting statistics from database...")
-        stats = db.get_statistics()
-        print(f"✅ Statistics retrieved: {stats}")
-        
-        if not stats:
-            print("⚠️ No statistics returned from database")
-            stats = {
-                'total_searches': 0,
-                'by_type': {},
-                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
-                'recent_activity': 0
-            }
-        
-        response = {"status": "success", "statistics": stats}
-        print(f"📤 Returning response: {response}")
-        return response
-    except Exception as e:
-        print(f"❌ Error getting statistics: {e}")
-        import traceback
-        traceback.print_exc()
-        # Return a default response instead of throwing an error
-        return {
-            "status": "success", 
-            "statistics": {
-                'total_searches': 0,
-                'by_type': {},
-                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
-                'recent_activity': 0
-            }
-        }
-
-@app.get("/history/{search_id}")
-async def get_search_details(search_id: int):
-    """Get detailed information about a specific search"""
-    try:
-        if db is None:
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        search = db.get_search_by_id(search_id)
-        if not search:
-            raise HTTPException(status_code=404, detail="Search not found")
-        
-        return {"status": "success", "search": search}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error getting search details: {e}")
-        return {"status": "error", "error": str(e)}
-
-@app.post("/history/{search_id}/favorite")
-async def toggle_favorite(search_id: int):
-    """Toggle favorite status of a search"""
-    try:
-        if db is None:
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        success = db.toggle_favorite(search_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Search not found")
-        
-        return {"status": "success", "message": "Favorite status updated"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error toggling favorite: {e}")
-        return {"status": "error", "error": str(e)}
-
-@app.delete("/history/{search_id}")
-async def delete_search(search_id: int):
-    """Delete a search from history"""
-    try:
-        if db is None:
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        success = db.delete_search(search_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Search not found")
-        
-        return {"status": "success", "message": "Search deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error deleting search: {e}")
-        return {"status": "error", "error": str(e)}
-
-@app.get("/history/statistics")
-async def get_history_statistics():
-    """Get search history statistics"""
-    try:
-        print("📊 Statistics endpoint called")
-        if db is None:
-            print("❌ Database is None")
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        print("🔍 Getting statistics from database...")
-        stats = db.get_statistics()
-        print(f"✅ Statistics retrieved: {stats}")
-        
-        if not stats:
-            print("⚠️ No statistics returned from database")
-            stats = {
-                'total_searches': 0,
-                'by_type': {},
-                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
-                'recent_activity': 0
-            }
-        
-        response = {"status": "success", "statistics": stats}
-        print(f"📤 Returning response: {response}")
-        return response
-    except Exception as e:
-        print(f"❌ Error getting statistics: {e}")
-        import traceback
-        traceback.print_exc()
-        # Return a default response instead of throwing an error
-        return {
-            "status": "success", 
-            "statistics": {
-                'total_searches': 0,
-                'by_type': {},
-                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
-                'recent_activity': 0
-            }
-        }
-
-@app.post("/history/clear")
-async def clear_history():
-    """Clear all search history"""
-    try:
-        if db is None:
-            raise HTTPException(status_code=500, detail="Database not initialized")
-        
-        deleted_count = db.clear_history()
-        return {"status": "success", "message": f"Cleared {deleted_count} search records"}
-    except Exception as e:
-        print(f"Error clearing history: {e}")
-        return {"status": "error", "error": str(e)}
+# History/database endpoints removed
 
 @app.post("/api/analyze-text")
 async def analyze_text(text: str = Form(...)):
@@ -289,16 +114,7 @@ async def analyze_text(text: str = Form(...)):
         
         result = await analyzer.analyze_text_comprehensive(text)
         
-        # Save to history
-        if db is not None:
-            try:
-                db.add_search(
-                    analysis_type="text",
-                    content=text,
-                    results=result
-                )
-            except Exception as e:
-                print(f"Warning: Failed to save to history: {e}")
+        # Database removed: do not persist
         
         return result
     except HTTPException:
@@ -330,18 +146,7 @@ async def analyze_image(file: UploadFile = File(...)):
         # Analyze image
         result = await analyzer.analyze_image_deepfake(temp_path)
         
-        # Save to history
-        if db is not None:
-            try:
-                db.add_search(
-                    analysis_type="image",
-                    content=file.filename,
-                    results=result,
-                    file_name=file.filename,
-                    file_size=len(content)
-                )
-            except Exception as e:
-                print(f"Warning: Failed to save to history: {e}")
+        # Database removed: do not persist
         
         # Clean up with retry mechanism for Windows
         max_retries = 3
@@ -392,18 +197,7 @@ async def analyze_video(file: UploadFile = File(...)):
         # Analyze video
         result = await analyzer.analyze_video_deepfake(temp_path)
         
-        # Save to history
-        if db is not None:
-            try:
-                db.add_search(
-                    analysis_type="video",
-                    content=file.filename,
-                    results=result,
-                    file_name=file.filename,
-                    file_size=len(content)
-                )
-            except Exception as e:
-                print(f"Warning: Failed to save to history: {e}")
+        # Database removed: do not persist
         
         # Clean up with retry mechanism for Windows
         max_retries = 3
@@ -464,7 +258,7 @@ async def debug_info():
 
 if __name__ == "__main__":
     import uvicorn
-    PORT = 5000  # Standard Flask port
+    PORT = 5000
     print("🚀 Starting CyberGuard AI Detector...")
     print("=" * 60)
     print(f"🌐 Main Application: http://localhost:{PORT}")

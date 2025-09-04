@@ -45,7 +45,7 @@ def kill_existing_process(port):
         return False
 
 if __name__ == "__main__":
-    DEFAULT_PORT = 8000
+    DEFAULT_PORT = 5000
     
     print("🚀 Starting AI-Powered Misinformation & Deepfake Detection Tool...")
     print("=" * 70)
