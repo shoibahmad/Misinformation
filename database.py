@@ -164,7 +164,8 @@ class SearchHistoryDB:
                 params.append(max_risk)
             
             if favorites_only:
-                query += ' AND is_favorite = TRUE'
+                # Use 1 for TRUE to ensure compatibility with SQLite boolean handling
+                query += ' AND is_favorite = 1'
             
             query += ' ORDER BY timestamp DESC LIMIT ?'
             params.append(limit)
@@ -253,7 +254,7 @@ class SearchHistoryDB:
             ''')
             by_type = dict(cursor.fetchall())
             
-            # Risk distribution
+            # Risk distribution (guard against NULLs when table has no rows)
             cursor.execute('''
                 SELECT 
                     SUM(CASE WHEN risk_score < 0.3 THEN 1 ELSE 0 END) as low_risk,
@@ -261,7 +262,7 @@ class SearchHistoryDB:
                     SUM(CASE WHEN risk_score >= 0.7 THEN 1 ELSE 0 END) as high_risk
                 FROM search_history
             ''')
-            risk_dist = cursor.fetchone()
+            risk_dist = cursor.fetchone() or (0, 0, 0)
             
             # Recent activity (last 7 days)
             cursor.execute('''
@@ -272,14 +273,14 @@ class SearchHistoryDB:
             recent_activity = cursor.fetchone()[0]
             
             return {
-                'total_searches': total_searches,
-                'by_type': by_type,
+                'total_searches': int(total_searches or 0),
+                'by_type': {str(k): int(v) for k, v in (by_type or {}).items()},
                 'risk_distribution': {
-                    'low': risk_dist[0] or 0,
-                    'medium': risk_dist[1] or 0,
-                    'high': risk_dist[2] or 0
+                    'low': int((risk_dist[0] or 0)),
+                    'medium': int((risk_dist[1] or 0)),
+                    'high': int((risk_dist[2] or 0))
                 },
-                'recent_activity': recent_activity
+                'recent_activity': int(recent_activity or 0)
             }
     
     def clear_history(self, older_than_days: Optional[int] = None) -> int:

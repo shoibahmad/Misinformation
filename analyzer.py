@@ -10,10 +10,21 @@ import json
 from typing import Dict, Any, List, Optional
 from textblob import TextBlob
 import google.generativeai as genai
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
-# Load environment variables
-load_dotenv()
+# Load environment variables safely (ignore malformed lines in .env)
+def _load_env_safely():
+    try:
+        env_path = os.path.join(os.getcwd(), ".env")
+        if os.path.exists(env_path):
+            values = dotenv_values(env_path)
+            for key, value in values.items():
+                if value is not None and key not in os.environ:
+                    os.environ[key] = str(value)
+    except Exception as e:
+        print(f"⚠️  Skipping .env load due to parse issue: {e}")
+
+_load_env_safely()
 
 class MisinformationAnalyzer:
     def __init__(self):

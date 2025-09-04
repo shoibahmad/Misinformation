@@ -133,6 +133,46 @@ async def get_search_history(
         print(f"Error getting history: {e}")
         return {"status": "error", "error": str(e)}
 
+@app.get("/history/statistics")
+async def get_history_statistics():
+    """Get search history statistics"""
+    try:
+        print("📊 Statistics endpoint called")
+        if db is None:
+            print("❌ Database is None")
+            raise HTTPException(status_code=500, detail="Database not initialized")
+        
+        print("🔍 Getting statistics from database...")
+        stats = db.get_statistics()
+        print(f"✅ Statistics retrieved: {stats}")
+        
+        if not stats:
+            print("⚠️ No statistics returned from database")
+            stats = {
+                'total_searches': 0,
+                'by_type': {},
+                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
+                'recent_activity': 0
+            }
+        
+        response = {"status": "success", "statistics": stats}
+        print(f"📤 Returning response: {response}")
+        return response
+    except Exception as e:
+        print(f"❌ Error getting statistics: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return a default response instead of throwing an error
+        return {
+            "status": "success", 
+            "statistics": {
+                'total_searches': 0,
+                'by_type': {},
+                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
+                'recent_activity': 0
+            }
+        }
+
 @app.get("/history/{search_id}")
 async def get_search_details(search_id: int):
     """Get detailed information about a specific search"""
