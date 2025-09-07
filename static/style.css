@@ -956,6 +956,11 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .analysis-section h4 {
@@ -1384,6 +1389,67 @@ body {
     
     .api-grid {
         grid-template-columns: 1fr;
+    }
+    
+    /* Fix analysis sections on mobile */
+    .analysis-section {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        overflow-x: auto;
+    }
+    
+    .analysis-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .analysis-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: var(--bg-primary);
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .analysis-section h4 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Ensure all sections are visible */
+    .analysis-details {
+        max-height: none;
+        overflow: visible;
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    .analysis-content {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    #analysis-content {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 50px;
+    }
+    
+    .analysis-details {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Fix badge display on mobile */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        word-break: break-word;
     }
 }
 

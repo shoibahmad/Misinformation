@@ -629,6 +629,8 @@ function setVideoLoading(loading) {
 
 // Display functions
 function displayTextResults(result) {
+    console.log('📊 Displaying text results:', result);
+    
     // Risk assessment
     const riskLevel = getRiskLevel(result.misinformation_score);
     const riskBadge = document.getElementById('risk-badge');
@@ -661,6 +663,8 @@ function displayTextResults(result) {
 
     // Analysis details
     let analysisHTML = '';
+    
+    console.log('🔍 Analysis data:', result.analysis);
 
     if (result.analysis) {
         const analysis = result.analysis;
@@ -726,11 +730,150 @@ function displayTextResults(result) {
                 `;
             }
         }
+
+        // Linguistic patterns
+        if (analysis.linguistic_patterns) {
+            const ling = analysis.linguistic_patterns;
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-language"></i> Linguistic Analysis</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Risk Level:</span>
+                            <span class="badge ${ling.risk_level}">${ling.risk_level ? ling.risk_level.toUpperCase() : 'UNKNOWN'}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Suspicious Phrases:</span>
+                            <span>${ling.suspicious_phrases || 0}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Emotional Language:</span>
+                            <span>${ling.emotional_language || 0}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Caps Ratio:</span>
+                            <span>${((ling.caps_ratio || 0) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Sentiment analysis
+        if (analysis.sentiment && !analysis.sentiment.error) {
+            const sent = analysis.sentiment;
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-heart"></i> Sentiment Analysis</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Sentiment:</span>
+                            <span class="badge ${sent.sentiment}">${sent.sentiment ? sent.sentiment.toUpperCase() : 'UNKNOWN'}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Polarity:</span>
+                            <span>${(sent.polarity || 0).toFixed(2)}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Subjectivity:</span>
+                            <span>${(sent.subjectivity || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fact check results
+        if (analysis.fact_check) {
+            const fact = analysis.fact_check;
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-check-circle"></i> Fact Check Results</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge ${fact.status === 'success' ? 'success' : 'error'}">${fact.status ? fact.status.toUpperCase() : 'UNKNOWN'}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Claims Found:</span>
+                            <span>${fact.claims_found || 0}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Has Fact Checks:</span>
+                            <span>${fact.has_fact_checks ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // News verification
+        if (analysis.news_verification) {
+            const news = analysis.news_verification;
+            analysisHTML += `
+                <div class="analysis-section">
+                    <h4><i class="fas fa-newspaper"></i> News Verification</h4>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <span>Status:</span>
+                            <span class="badge ${news.status === 'success' ? 'success' : 'error'}">${news.status ? news.status.toUpperCase() : 'UNKNOWN'}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Articles Found:</span>
+                            <span>${news.total_articles || 0}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Reliable Sources:</span>
+                            <span>${news.reliable_sources || 0}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span>Reliability Ratio:</span>
+                            <span>${((news.reliability_ratio || 0) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        // Fallback when no analysis data is available
+        analysisHTML = `
+            <div class="analysis-section">
+                <h4><i class="fas fa-exclamation-triangle"></i> Analysis Status</h4>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span>Status:</span>
+                        <span class="badge error">No Analysis Data Available</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: 6px;">
+                    <strong>Note:</strong> Analysis data was not returned from the server. Please try again or check your API configuration.
+                </div>
+            </div>
+        `;
     }
 
     const analysisContent = document.getElementById('analysis-content');
     if (analysisContent) {
+        console.log('📝 Setting analysis content HTML:', analysisHTML.length, 'characters');
+        console.log('📝 HTML Preview:', analysisHTML.substring(0, 200) + '...');
         analysisContent.innerHTML = analysisHTML;
+        
+        // Force visibility
+        analysisContent.style.display = 'block';
+        analysisContent.style.visibility = 'visible';
+        analysisContent.style.opacity = '1';
+        
+        // Ensure all analysis sections are visible
+        const sections = analysisContent.querySelectorAll('.analysis-section');
+        console.log('🔍 Found', sections.length, 'analysis sections');
+        sections.forEach((section, index) => {
+            section.style.display = 'block';
+            section.style.visibility = 'visible';
+            section.style.opacity = '1';
+            console.log(`📋 Section ${index + 1}:`, section.querySelector('h4')?.textContent);
+        });
+    } else {
+        console.error('❌ Analysis content element not found');
     }
 
     // Recommendations
@@ -788,9 +931,19 @@ function getRiskLevel(score) {
 
 // Utility functions
 function showResults() {
+    console.log('📊 Showing results...');
     const resultsElement = document.getElementById('results');
     if (resultsElement) {
         resultsElement.classList.remove('hidden');
+        resultsElement.style.display = 'block';
+        resultsElement.style.visibility = 'visible';
+        resultsElement.style.opacity = '1';
+        console.log('✅ Results section is now visible');
+        
+        // Scroll to results
+        resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        console.error('❌ Results element not found');
     }
 }
 
