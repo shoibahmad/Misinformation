@@ -145,10 +145,6 @@ async def analyze_image(file: UploadFile = File(...)):
         
         # Analyze image
         result = await analyzer.analyze_image_deepfake(temp_path)
-        
-        # Database removed: do not persist
-        
-        # Clean up with retry mechanism for Windows
         max_retries = 3
         for attempt in range(max_retries):
             try:
@@ -238,7 +234,7 @@ async def get_models():
 @app.get("/api/test")
 async def test_endpoint():
     """Simple test endpoint"""
-    return {"message": "API is working", "status": "ok", "port": "3000"}
+    return {"message": "API is working", "status": "ok", "port": "8003"}
 
 @app.get("/debug")
 async def debug_info():
@@ -252,13 +248,13 @@ async def debug_info():
             "NEWSDATA_API_KEY": "Set" if os.getenv('NEWSDATA_API_KEY') else "Not set", 
             "FACTCHECK_API_KEY": "Set" if os.getenv('FACTCHECK_API_KEY') else "Not set"
         },
-        "port": 3000,
+        "port": 8003,
         "status": "running"
     }
 
 if __name__ == "__main__":
     import uvicorn
-    PORT = 5000
+    PORT = 8003
     print("🚀 Starting CyberGuard AI Detector...")
     print("=" * 60)
     print(f"🌐 Main Application: http://localhost:{PORT}")
