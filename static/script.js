@@ -1824,10 +1824,10 @@ function initializeMobileOptimizations() {
         element.classList.add('touch-friendly');
     });
     
-    // Optimize file upload for mobile
+    // Optimize file upload for mobile - removed capture attribute to allow gallery access
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach(input => {
-        input.setAttribute('capture', 'environment');
+        input.removeAttribute('capture');
     });
 }
 
