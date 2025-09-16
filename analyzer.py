@@ -30,7 +30,7 @@ class MisinformationAnalyzer:
     def __init__(self):
         """Initialize the analyzer with API configurations"""
         # API Keys - Replace with your actual keys
-        self.newsdata_api_key = os.getenv('NEWSDATA_API_KEY', 'pub_e0fdf336c7c34b06a72f63cc14d675a8')
+        self.gnews_api_key = os.getenv('GNEWS_API_KEY', 'cd6e2554c24e98f234578e2a5235ae27')
         self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyAouVSfu1BO_oYrOIOXoMuegrf3Oj1ceqk')  # Use proper Google Cloud API key
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyD3adGsM5dxI_OytL68ePc4eeQRwrpwx80')
         
@@ -393,44 +393,44 @@ class MisinformationAnalyzer:
             }
 
     async def _verify_with_news_apis(self, text: str) -> Dict[str, Any]:
-        """Verify information using NewsAPI"""
+        """Verify information using GNews API"""
         try:
-            if (not self.newsdata_api_key or 
-                self.newsdata_api_key == 'YOUR_NEWSDATA_API_KEY_HERE' or
-                self.newsdata_api_key.strip() == ''):
+            if (not self.gnews_api_key or 
+                self.gnews_api_key == 'YOUR_GNEWS_API_KEY_HERE' or
+                self.gnews_api_key.strip() == ''):
                 return {
                     'status': 'API key not configured', 
                     'total_articles': 0,
                     'reliable_sources': 0,
                     'reliability_ratio': 0,
                     'top_articles': [],
-                    'message': 'NewsData.io API key not configured'
+                    'message': 'GNews API key not configured'
                 }
             
             # Extract key terms for search
             words = text.split()[:10]  # Use first 10 words
             query = ' '.join(words)
             
-            url = "https://newsdata.io/api/1/news"
+            url = "https://gnews.io/api/v4/search"
             params = {
-                'apikey': self.newsdata_api_key,
+                'token': self.gnews_api_key,
                 'q': query,
-                'language': 'en',
-                'size': 5,
-                'prioritydomain': 'top'
+                'lang': 'en',
+                'max': 5,
+                'sortby': 'relevance'
             }
             
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
                     if response.status == 200:
                         data = await response.json()
-                        articles = data.get('results', [])
+                        articles = data.get('articles', [])
                         
                         # Check source reliability
                         reliable_count = 0
                         for article in articles:
-                            source_url = article.get('link', '')
-                            source_name = article.get('source_id', '')
+                            source_url = article.get('url', '')
+                            source_name = article.get('source', {}).get('name', '')
                             if any(reliable in source_url or reliable in source_name for reliable in self.reliable_sources):
                                 reliable_count += 1
                         
@@ -444,7 +444,7 @@ class MisinformationAnalyzer:
                     elif response.status == 401:
                         return {
                             'status': 'error', 
-                            'message': 'Invalid NewsData.io API key',
+                            'message': 'Invalid GNews API key',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -453,7 +453,7 @@ class MisinformationAnalyzer:
                     elif response.status == 429:
                         return {
                             'status': 'error', 
-                            'message': 'NewsData.io rate limit exceeded',
+                            'message': 'GNews rate limit exceeded',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -462,7 +462,7 @@ class MisinformationAnalyzer:
                     else:
                         return {
                             'status': 'error', 
-                            'message': f'NewsData.io returned status {response.status}',
+                            'message': f'GNews returned status {response.status}',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -471,7 +471,7 @@ class MisinformationAnalyzer:
         except Exception as e:
             return {
                 'status': 'error', 
-                'message': f'NewsData.io error: {str(e)}',
+                'message': f'GNews error: {str(e)}',
                 'total_articles': 0,
                 'reliable_sources': 0,
                 'reliability_ratio': 0,

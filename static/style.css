@@ -786,6 +786,7 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
+    text-align: left;
 }
 
 .accuracy-badge {
@@ -804,6 +805,7 @@ body {
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 1.5rem;
+    text-align: left;
 }
 
 .option-features {
@@ -963,6 +965,7 @@ body {
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
+    text-align: left;
 }
 
 .header-content p {
@@ -970,6 +973,7 @@ body {
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 1rem;
+    text-align: left;
 }
 
 .analysis-badges {
@@ -1055,6 +1059,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     font-size: 1.1rem;
+    text-align: left;
 }
 
 .input-label i {
@@ -1201,11 +1206,13 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
+    text-align: center;
 }
 
 .upload-content p {
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
+    text-align: center;
 }
 
 .format-support {
@@ -1213,6 +1220,7 @@ body {
     justify-content: center;
     gap: 0.75rem;
     margin-bottom: 1rem;
+    text-align: center;
 }
 
 .format {
@@ -1276,6 +1284,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
+    text-align: center;
 }
 
 .btn-glow {
@@ -1309,6 +1318,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    text-align: center;
 }
 
 .spinner-ring {
@@ -1421,6 +1431,7 @@ body {
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    text-align: left;
 }
 
 .results-icon {
@@ -1443,6 +1454,7 @@ body {
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+    text-align: left;
 }
 
 .analysis-timestamp {
@@ -1508,6 +1520,7 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+    text-align: left;
 }
 
 .confidence-indicator {
@@ -1699,6 +1712,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding-left: 1rem;
+    text-align: left;
 }
 
 .analysis-section h4 i {
@@ -1942,6 +1956,7 @@ body {
 
 .footer-brand {
     max-width: 400px;
+    text-align: left;
 }
 
 .footer-logo {
@@ -1968,6 +1983,7 @@ body {
 .footer-brand p {
     color: var(--text-secondary);
     line-height: 1.6;
+    text-align: left;
 }
 
 .footer-links {
@@ -1981,6 +1997,7 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 1rem;
+    text-align: left;
 }
 
 .link-group a {
@@ -2008,6 +2025,7 @@ body {
 .footer-info p {
     color: var(--text-muted);
     margin-bottom: 1rem;
+    text-align: left;
 }
 
 .tech-badges {
@@ -2480,6 +2498,7 @@ textarea:focus-visible {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
+    text-align: left;
 }
 
 .modal-body {
@@ -2494,11 +2513,13 @@ textarea:focus-visible {
     color: var(--text-primary);
     margin: 1.5rem 0 1rem 0;
     font-weight: 600;
+    text-align: left;
 }
 
 .modal-body p {
     margin-bottom: 1rem;
     color: var(--text-secondary);
+    text-align: left;
 }
 
 .modal-body ul {
@@ -2509,6 +2530,7 @@ textarea:focus-visible {
 .modal-body li {
     margin-bottom: 0.5rem;
     color: var(--text-secondary);
+    text-align: left;
 }
 
 .modal-body .example-item {
@@ -2523,6 +2545,7 @@ textarea:focus-visible {
     font-weight: 600;
     color: var(--text-accent);
     margin-bottom: 0.5rem;
+    text-align: left;
 }
 
 .modal-body .example-text {
@@ -2532,6 +2555,7 @@ textarea:focus-visible {
     font-style: italic;
     margin: 0.5rem 0;
     border-left: 4px solid var(--text-accent);
+    text-align: left;
 }
 
 .close-btn {
