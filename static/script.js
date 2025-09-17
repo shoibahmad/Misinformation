@@ -169,7 +169,7 @@ async function checkApiStatus() {
 function updateApiStatusUI(status) {
     const statusItems = {
         'gemini-tech-status': { name: 'Gemini AI', key: 'gemini_available' },
-        'news-tech-status': { name: 'GNews API', key: 'gnews_available' },
+        'news-tech-status': { name: 'NewsAPI', key: 'newsapi_available' },
         'fact-tech-status': { name: 'FactCheck', key: 'factcheck_available' }
     };
 
@@ -1766,7 +1766,7 @@ function showFAQ() {
         <p>For full functionality, configure these API keys in your .env file:</p>
         <ul>
             <li><strong>GEMINI_API_KEY:</strong> Google Gemini AI for advanced analysis</li>
-            <li><strong>GNEWS_API_KEY:</strong> News verification and source checking</li>
+            <li><strong>NEWSAPI_KEY:</strong> News verification and source checking</li>
             <li><strong>FACTCHECK_API_KEY:</strong> Professional fact-checking database</li>
         </ul>
         

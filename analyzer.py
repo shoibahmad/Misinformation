@@ -30,7 +30,7 @@ class MisinformationAnalyzer:
     def __init__(self):
         """Initialize the analyzer with API configurations"""
         # API Keys - Replace with your actual keys
-        self.gnews_api_key = os.getenv('GNEWS_API_KEY', 'cd6e2554c24e98f234578e2a5235ae27')
+        self.newsapi_key = os.getenv('NEWSAPI_KEY', '1aef5e04e84643a889ba8e0f377e196b')
         self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyAouVSfu1BO_oYrOIOXoMuegrf3Oj1ceqk')  # Use proper Google Cloud API key
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyD3adGsM5dxI_OytL68ePc4eeQRwrpwx80')
         
@@ -393,31 +393,31 @@ class MisinformationAnalyzer:
             }
 
     async def _verify_with_news_apis(self, text: str) -> Dict[str, Any]:
-        """Verify information using GNews API"""
+        """Verify information using NewsAPI"""
         try:
-            if (not self.gnews_api_key or 
-                self.gnews_api_key == 'YOUR_GNEWS_API_KEY_HERE' or
-                self.gnews_api_key.strip() == ''):
+            if (not self.newsapi_key or 
+                self.newsapi_key == 'YOUR_NEWSAPI_KEY_HERE' or
+                self.newsapi_key.strip() == ''):
                 return {
                     'status': 'API key not configured', 
                     'total_articles': 0,
                     'reliable_sources': 0,
                     'reliability_ratio': 0,
                     'top_articles': [],
-                    'message': 'GNews API key not configured'
+                    'message': 'NewsAPI key not configured'
                 }
             
             # Extract key terms for search
             words = text.split()[:10]  # Use first 10 words
             query = ' '.join(words)
             
-            url = "https://gnews.io/api/v4/search"
+            url = "https://newsapi.org/v2/everything"
             params = {
-                'token': self.gnews_api_key,
+                'apiKey': self.newsapi_key,
                 'q': query,
-                'lang': 'en',
-                'max': 5,
-                'sortby': 'relevance'
+                'language': 'en',
+                'pageSize': 10,
+                'sortBy': 'relevancy'
             }
             
             async with aiohttp.ClientSession() as session:
@@ -444,7 +444,7 @@ class MisinformationAnalyzer:
                     elif response.status == 401:
                         return {
                             'status': 'error', 
-                            'message': 'Invalid GNews API key',
+                            'message': 'Invalid NewsAPI key',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -453,7 +453,7 @@ class MisinformationAnalyzer:
                     elif response.status == 429:
                         return {
                             'status': 'error', 
-                            'message': 'GNews rate limit exceeded',
+                            'message': 'NewsAPI rate limit exceeded',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -462,7 +462,7 @@ class MisinformationAnalyzer:
                     else:
                         return {
                             'status': 'error', 
-                            'message': f'GNews returned status {response.status}',
+                            'message': f'NewsAPI returned status {response.status}',
                             'total_articles': 0,
                             'reliable_sources': 0,
                             'reliability_ratio': 0,
@@ -471,7 +471,7 @@ class MisinformationAnalyzer:
         except Exception as e:
             return {
                 'status': 'error', 
-                'message': f'GNews error: {str(e)}',
+                'message': f'NewsAPI error: {str(e)}',
                 'total_articles': 0,
                 'reliable_sources': 0,
                 'reliability_ratio': 0,

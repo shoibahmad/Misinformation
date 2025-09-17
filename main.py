@@ -75,21 +75,21 @@ async def get_api_status():
             print("⚠️ Analyzer is None")
             return {
                 "gemini_available": False,
-                "gnews_available": False,
+                "newsapi_available": False,
                 "factcheck_available": False,
                 "analyzer_ready": False
             }
         
         # Check which APIs are configured
         gemini_available = bool(os.getenv('GEMINI_API_KEY'))
-        gnews_available = bool(os.getenv('GNEWS_API_KEY'))
+        newsapi_available = bool(os.getenv('NEWSAPI_KEY'))
         factcheck_available = bool(os.getenv('FACTCHECK_API_KEY'))
         
-        print(f"📊 API Status: Gemini={gemini_available}, GNews={gnews_available}, FactCheck={factcheck_available}")
+        print(f"📊 API Status: Gemini={gemini_available}, NewsAPI={newsapi_available}, FactCheck={factcheck_available}")
         
         return {
             "gemini_available": gemini_available,
-            "gnews_available": gnews_available,
+            "newsapi_available": newsapi_available,
             "factcheck_available": factcheck_available,
             "analyzer_ready": True
         }
@@ -97,7 +97,7 @@ async def get_api_status():
         print(f"❌ Error in API status: {e}")
         return {
             "gemini_available": False,
-            "gnews_available": False,
+            "newsapi_available": False,
             "factcheck_available": False,
             "analyzer_ready": False,
             "error": str(e)
@@ -245,7 +245,7 @@ async def debug_info():
         "analyzer_status": analyzer is not None,
         "env_vars": {
             "GEMINI_API_KEY": "Set" if os.getenv('GEMINI_API_KEY') else "Not set",
-            "GNEWS_API_KEY": "Set" if os.getenv('GNEWS_API_KEY') else "Not set", 
+            "NEWSAPI_KEY": "Set" if os.getenv('NEWSAPI_KEY') else "Not set", 
             "FACTCHECK_API_KEY": "Set" if os.getenv('FACTCHECK_API_KEY') else "Not set"
         },
         "port": 8003,
