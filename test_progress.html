@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Indicator Test</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div style="padding: 2rem; max-width: 600px; margin: 0 auto;">
+        <h1>Progress Indicator Test</h1>
+        
+        <div style="margin: 2rem 0;">
+            <h2>Text Analysis Progress</h2>
+            <button onclick="testTextProgress()" style="padding: 1rem; margin-bottom: 1rem;">Test Text Progress</button>
+            
+            <div id="text-progress" class="progress-indicator hidden">
+                <div class="progress-steps">
+                    <div class="progress-step active" id="text-step-1">
+                        <i class="fas fa-file-text"></i>
+                        <span>Processing text...</span>
+                    </div>
+                    <div class="progress-step" id="text-step-2">
+                        <i class="fas fa-brain"></i>
+                        <span>AI analysis...</span>
+                    </div>
+                    <div class="progress-step" id="text-step-3">
+                        <i class="fas fa-search"></i>
+                        <span>Fact checking...</span>
+                    </div>
+                    <div class="progress-step" id="text-step-4">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Finalizing...</span>
+                    </div>
+                </div>
+                <div class="progress-message" id="text-progress-message">Starting analysis...</div>
+            </div>
+        </div>
+
+        <div style="margin: 2rem 0;">
+            <h2>Image Analysis Progress</h2>
+            <button onclick="testImageProgress()" style="padding: 1rem; margin-bottom: 1rem;">Test Image Progress</button>
+            
+            <div id="image-progress" class="progress-indicator hidden">
+                <div class="progress-steps">
+                    <div class="progress-step active" id="image-step-1">
+                        <i class="fas fa-upload"></i>
+                        <span>Uploading image...</span>
+                    </div>
+                    <div class="progress-step" id="image-step-2">
+                        <i class="fas fa-eye"></i>
+                        <span>Vision analysis...</span>
+                    </div>
+                    <div class="progress-step" id="image-step-3">
+                        <i class="fas fa-search"></i>
+                        <span>Deepfake detection...</span>
+                    </div>
+                    <div class="progress-step" id="image-step-4">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Generating report...</span>
+                    </div>
+                </div>
+                <div class="progress-message" id="image-progress-message">Preparing image analysis...</div>
+            </div>
+        </div>
+
+        <div style="margin: 2rem 0;">
+            <h2>Video Analysis Progress</h2>
+            <button onclick="testVideoProgress()" style="padding: 1rem; margin-bottom: 1rem;">Test Video Progress</button>
+            
+            <div id="video-progress" class="progress-indicator hidden">
+                <div class="progress-steps">
+                    <div class="progress-step active" id="video-step-1">
+                        <i class="fas fa-upload"></i>
+                        <span>Uploading video...</span>
+                    </div>
+                    <div class="progress-step" id="video-step-2">
+                        <i class="fas fa-film"></i>
+                        <span>Extracting frames...</span>
+                    </div>
+                    <div class="progress-step" id="video-step-3">
+                        <i class="fas fa-brain"></i>
+                        <span>AI analysis...</span>
+                    </div>
+                    <div class="progress-step" id="video-step-4">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Processing results...</span>
+                    </div>
+                    <div class="progress-step" id="video-step-5">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Finalizing report...</span>
+                    </div>
+                </div>
+                <div class="progress-message" id="video-progress-message">Preparing video analysis...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>

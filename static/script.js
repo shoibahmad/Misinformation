@@ -516,6 +516,9 @@ async function analyzeText() {
         const formData = new FormData();
         formData.append('text', text);
 
+        // Start dynamic progress updates
+        updateTextProgressDynamic();
+
         const response = await fetch('/api/analyze-text', {
             method: 'POST',
             body: formData
@@ -533,12 +536,73 @@ async function analyzeText() {
         }
 
         const result = await response.json();
-        displayTextResults(result);
+        
+        // Complete progress
+        completeTextProgress();
+        
+        setTimeout(() => {
+            displayTextResults(result);
+        }, 300);
 
     } catch (error) {
         showNotification(error.message || 'An error occurred during analysis', 'error');
     } finally {
-        setTextLoading(false);
+        setTimeout(() => {
+            setTextLoading(false);
+        }, 500);
+    }
+}
+
+function updateTextProgressDynamic() {
+    const progressUpdates = [
+        { step: 2, message: 'Running AI linguistic analysis...', delay: 800 },
+        { step: 3, message: 'Cross-referencing with fact databases...', delay: 2000 },
+        { step: 4, message: 'Generating credibility report...', delay: 3200 }
+    ];
+    
+    progressUpdates.forEach(update => {
+        setTimeout(() => {
+            updateTextStep(update.step, update.message);
+        }, update.delay);
+    });
+}
+
+function updateTextStep(stepNumber, message) {
+    // Complete previous steps
+    for (let i = 1; i < stepNumber; i++) {
+        const step = document.getElementById(`text-step-${i}`);
+        if (step) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+    }
+    
+    // Activate current step
+    const currentStep = document.getElementById(`text-step-${stepNumber}`);
+    if (currentStep) {
+        currentStep.classList.add('active');
+    }
+    
+    // Update message
+    const messageElement = document.getElementById('text-progress-message');
+    if (messageElement) {
+        messageElement.textContent = message;
+    }
+}
+
+function completeTextProgress() {
+    // Mark all steps as completed
+    for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`text-step-${i}`);
+        if (step) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+    }
+    
+    const messageElement = document.getElementById('text-progress-message');
+    if (messageElement) {
+        messageElement.textContent = 'Analysis complete!';
     }
 }
 
@@ -556,6 +620,9 @@ async function analyzeImage() {
         const formData = new FormData();
         formData.append('file', selectedImageFile);
 
+        // Start dynamic progress updates
+        updateImageProgressDynamic();
+
         const response = await fetch('/api/analyze-image', {
             method: 'POST',
             body: formData
@@ -567,12 +634,73 @@ async function analyzeImage() {
         }
 
         const result = await response.json();
-        displayImageResults(result);
+        
+        // Complete progress
+        completeImageProgress();
+        
+        setTimeout(() => {
+            displayImageResults(result);
+        }, 400);
 
     } catch (error) {
         showNotification(error.message || 'An error occurred during image analysis', 'error');
     } finally {
-        setImageLoading(false);
+        setTimeout(() => {
+            setImageLoading(false);
+        }, 600);
+    }
+}
+
+function updateImageProgressDynamic() {
+    const progressUpdates = [
+        { step: 2, message: 'Analyzing pixel patterns and metadata...', delay: 600 },
+        { step: 3, message: 'Detecting facial inconsistencies...', delay: 1500 },
+        { step: 4, message: 'Compiling authenticity assessment...', delay: 2800 }
+    ];
+    
+    progressUpdates.forEach(update => {
+        setTimeout(() => {
+            updateImageStep(update.step, update.message);
+        }, update.delay);
+    });
+}
+
+function updateImageStep(stepNumber, message) {
+    // Complete previous steps
+    for (let i = 1; i < stepNumber; i++) {
+        const step = document.getElementById(`image-step-${i}`);
+        if (step) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+    }
+    
+    // Activate current step
+    const currentStep = document.getElementById(`image-step-${stepNumber}`);
+    if (currentStep) {
+        currentStep.classList.add('active');
+    }
+    
+    // Update message
+    const messageElement = document.getElementById('image-progress-message');
+    if (messageElement) {
+        messageElement.textContent = message;
+    }
+}
+
+function completeImageProgress() {
+    // Mark all steps as completed
+    for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`image-step-${i}`);
+        if (step) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+    }
+    
+    const messageElement = document.getElementById('image-progress-message');
+    if (messageElement) {
+        messageElement.textContent = 'Analysis complete!';
     }
 }
 
@@ -590,6 +718,9 @@ async function analyzeVideo() {
         const formData = new FormData();
         formData.append('file', selectedVideoFile);
 
+        // Start progress tracking with estimated timing
+        updateVideoProgressDynamic();
+
         const response = await fetch('/api/analyze-video', {
             method: 'POST',
             body: formData
@@ -601,67 +732,385 @@ async function analyzeVideo() {
         }
 
         const result = await response.json();
-        displayVideoResults(result);
+        
+        // Complete all progress steps
+        completeVideoProgress();
+        
+        // Small delay to show completion
+        setTimeout(() => {
+            displayVideoResults(result);
+        }, 500);
 
     } catch (error) {
         showNotification(error.message || 'An error occurred during video analysis', 'error');
     } finally {
-        setVideoLoading(false);
+        setTimeout(() => {
+            setVideoLoading(false);
+        }, 1000);
     }
 }
 
-// Loading state functions
+function updateVideoProgressDynamic() {
+    // More realistic progress timing based on actual video processing
+    const progressUpdates = [
+        { step: 2, message: 'Analyzing video properties...', delay: 2000 },
+        { step: 3, message: 'AI processing frames...', delay: 4000 },
+        { step: 4, message: 'Detecting manipulation patterns...', delay: 7000 },
+        { step: 5, message: 'Compiling results...', delay: 9000 }
+    ];
+    
+    progressUpdates.forEach(update => {
+        setTimeout(() => {
+            updateVideoStep(update.step, update.message);
+        }, update.delay);
+    });
+}
+
+function updateVideoStep(stepNumber, message) {
+    // Complete previous steps
+    for (let i = 1; i < stepNumber; i++) {
+        const step = document.getElementById(`video-step-${i}`);
+        if (step) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+    }
+    
+    // Activate current step
+    const currentStep = document.getElementById(`video-step-${stepNumber}`);
+    if (currentStep) {
+        currentStep.classList.add('active');
+    }
+    
+    // Update message
+    const messageElement = document.getElementById('video-progress-message');
+    if (messageElement) {
+        messageElement.textContent = message;
+    }
+}
+
+function completeVideoProgress() {
+    // Mark all steps as completed
+    for (let i = 1; i <= 5; i++) {
+        const step = document.getElementById(`video-step-${i}`);
+        if (step) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+        }
+    }
+    
+    const messageElement = document.getElementById('video-progress-message');
+    if (messageElement) {
+        messageElement.textContent = 'Analysis complete! Generating report...';
+    }
+}
+
+// Loading state functions with text-based progress
 function setTextLoading(loading) {
+    console.log('🔄 setTextLoading called with:', loading);
+    
     const btn = document.getElementById('analyze-text-btn');
     const text = document.getElementById('text-btn-text');
-    const spinner = document.getElementById('text-spinner');
+    const progress = document.getElementById('text-progress');
 
-    if (btn && text && spinner) {
+    console.log('📋 Elements found:', { 
+        btn: !!btn, 
+        text: !!text, 
+        progress: !!progress 
+    });
+
+    if (progress) {
+        console.log('📊 Progress element details:', {
+            id: progress.id,
+            classes: progress.className,
+            display: getComputedStyle(progress).display,
+            visibility: getComputedStyle(progress).visibility,
+            opacity: getComputedStyle(progress).opacity
+        });
+    }
+
+    if (btn && text && progress) {
         if (loading) {
+            console.log('▶️ Starting loading state');
             btn.disabled = true;
             text.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            
+            // Force visibility with multiple methods
+            progress.classList.remove('hidden');
+            progress.classList.add('debug-visible');
+            progress.style.display = 'flex';
+            progress.style.visibility = 'visible';
+            progress.style.opacity = '1';
+            
+            console.log('✅ Progress indicator forced visible');
+            console.log('📊 After changes:', {
+                classes: progress.className,
+                display: progress.style.display,
+                visibility: progress.style.visibility
+            });
+            
+            startTextProgress();
         } else {
+            console.log('⏹️ Stopping loading state');
             btn.disabled = false;
             text.classList.remove('hidden');
-            spinner.classList.add('hidden');
+            progress.classList.add('hidden');
+            progress.classList.remove('debug-visible');
+            progress.style.display = '';
+            progress.style.visibility = '';
+            progress.style.opacity = '';
+            resetTextProgress();
         }
+    } else {
+        console.error('❌ Missing elements for text loading');
+        if (!btn) console.error('  - Button not found');
+        if (!text) console.error('  - Text element not found');
+        if (!progress) console.error('  - Progress element not found');
+    }
+}
+
+function startTextProgress() {
+    console.log('🚀 Starting text progress animation');
+    
+    const steps = [
+        { id: 'text-step-1', message: 'Processing text content...', delay: 0 },
+        { id: 'text-step-2', message: 'Running AI analysis...', delay: 1000 },
+        { id: 'text-step-3', message: 'Checking facts and sources...', delay: 2500 },
+        { id: 'text-step-4', message: 'Generating final report...', delay: 4000 }
+    ];
+    
+    const messageElement = document.getElementById('text-progress-message');
+    console.log('📝 Message element found:', !!messageElement);
+    
+    steps.forEach((step, index) => {
+        setTimeout(() => {
+            console.log(`📍 Activating step ${index + 1}: ${step.message}`);
+            
+            // Mark previous steps as completed
+            for (let i = 0; i < index; i++) {
+                const prevStep = document.getElementById(steps[i].id);
+                if (prevStep) {
+                    prevStep.classList.remove('active');
+                    prevStep.classList.add('completed');
+                    console.log(`✅ Completed step: ${steps[i].id}`);
+                }
+            }
+            
+            // Activate current step
+            const currentStep = document.getElementById(step.id);
+            if (currentStep) {
+                currentStep.classList.add('active');
+                console.log(`🎯 Activated step: ${step.id}`);
+            } else {
+                console.error(`❌ Step element not found: ${step.id}`);
+            }
+            
+            // Update message
+            if (messageElement) {
+                messageElement.textContent = step.message;
+                console.log(`💬 Updated message: ${step.message}`);
+            }
+        }, step.delay);
+    });
+}
+
+function resetTextProgress() {
+    const steps = ['text-step-1', 'text-step-2', 'text-step-3', 'text-step-4'];
+    steps.forEach(stepId => {
+        const step = document.getElementById(stepId);
+        if (step) {
+            step.classList.remove('active', 'completed');
+        }
+    });
+    
+    // Reset first step to active
+    const firstStep = document.getElementById('text-step-1');
+    if (firstStep) {
+        firstStep.classList.add('active');
+    }
+    
+    const messageElement = document.getElementById('text-progress-message');
+    if (messageElement) {
+        messageElement.textContent = 'Starting analysis...';
     }
 }
 
 function setImageLoading(loading) {
+    console.log('🖼️ setImageLoading called with:', loading);
+    
     const btn = document.getElementById('analyze-image-btn');
     const text = document.getElementById('image-btn-text');
-    const spinner = document.getElementById('image-spinner');
+    const progress = document.getElementById('image-progress');
 
-    if (btn && text && spinner) {
+    console.log('📋 Image elements found:', { 
+        btn: !!btn, 
+        text: !!text, 
+        progress: !!progress 
+    });
+
+    if (btn && text && progress) {
         if (loading) {
+            console.log('▶️ Starting image loading state');
             btn.disabled = true;
             text.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            progress.classList.remove('hidden');
+            console.log('✅ Image progress indicator should now be visible');
+            startImageProgress();
         } else {
+            console.log('⏹️ Stopping image loading state');
             btn.disabled = false;
             text.classList.remove('hidden');
-            spinner.classList.add('hidden');
+            progress.classList.add('hidden');
+            resetImageProgress();
         }
+    } else {
+        console.error('❌ Missing elements for image loading');
+    }
+}
+
+function startImageProgress() {
+    const steps = [
+        { id: 'image-step-1', message: 'Uploading and processing image...', delay: 0 },
+        { id: 'image-step-2', message: 'Running computer vision analysis...', delay: 800 },
+        { id: 'image-step-3', message: 'Detecting deepfakes and manipulation...', delay: 2000 },
+        { id: 'image-step-4', message: 'Generating authenticity report...', delay: 3500 }
+    ];
+    
+    const messageElement = document.getElementById('image-progress-message');
+    
+    steps.forEach((step, index) => {
+        setTimeout(() => {
+            // Mark previous steps as completed
+            for (let i = 0; i < index; i++) {
+                const prevStep = document.getElementById(steps[i].id);
+                if (prevStep) {
+                    prevStep.classList.remove('active');
+                    prevStep.classList.add('completed');
+                }
+            }
+            
+            // Activate current step
+            const currentStep = document.getElementById(step.id);
+            if (currentStep) {
+                currentStep.classList.add('active');
+            }
+            
+            // Update message
+            if (messageElement) {
+                messageElement.textContent = step.message;
+            }
+        }, step.delay);
+    });
+}
+
+function resetImageProgress() {
+    const steps = ['image-step-1', 'image-step-2', 'image-step-3', 'image-step-4'];
+    steps.forEach(stepId => {
+        const step = document.getElementById(stepId);
+        if (step) {
+            step.classList.remove('active', 'completed');
+        }
+    });
+    
+    // Reset first step to active
+    const firstStep = document.getElementById('image-step-1');
+    if (firstStep) {
+        firstStep.classList.add('active');
+    }
+    
+    const messageElement = document.getElementById('image-progress-message');
+    if (messageElement) {
+        messageElement.textContent = 'Preparing image analysis...';
     }
 }
 
 function setVideoLoading(loading) {
+    console.log('🎬 setVideoLoading called with:', loading);
+    
     const btn = document.getElementById('analyze-video-btn');
     const text = document.getElementById('video-btn-text');
-    const spinner = document.getElementById('video-spinner');
+    const progress = document.getElementById('video-progress');
 
-    if (btn && text && spinner) {
+    console.log('📋 Video elements found:', { 
+        btn: !!btn, 
+        text: !!text, 
+        progress: !!progress 
+    });
+
+    if (btn && text && progress) {
         if (loading) {
+            console.log('▶️ Starting video loading state');
             btn.disabled = true;
             text.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            progress.classList.remove('hidden');
+            console.log('✅ Video progress indicator should now be visible');
+            startVideoProgress();
         } else {
+            console.log('⏹️ Stopping video loading state');
             btn.disabled = false;
             text.classList.remove('hidden');
-            spinner.classList.add('hidden');
+            progress.classList.add('hidden');
+            resetVideoProgress();
         }
+    } else {
+        console.error('❌ Missing elements for video loading');
+    }
+}
+
+function startVideoProgress() {
+    const steps = [
+        { id: 'video-step-1', message: 'Uploading video file...', delay: 0 },
+        { id: 'video-step-2', message: 'Extracting key frames for analysis...', delay: 1200 },
+        { id: 'video-step-3', message: 'Running AI deepfake detection...', delay: 3000 },
+        { id: 'video-step-4', message: 'Processing temporal analysis...', delay: 6000 },
+        { id: 'video-step-5', message: 'Finalizing comprehensive report...', delay: 8000 }
+    ];
+    
+    const messageElement = document.getElementById('video-progress-message');
+    
+    steps.forEach((step, index) => {
+        setTimeout(() => {
+            // Mark previous steps as completed
+            for (let i = 0; i < index; i++) {
+                const prevStep = document.getElementById(steps[i].id);
+                if (prevStep) {
+                    prevStep.classList.remove('active');
+                    prevStep.classList.add('completed');
+                }
+            }
+            
+            // Activate current step
+            const currentStep = document.getElementById(step.id);
+            if (currentStep) {
+                currentStep.classList.add('active');
+            }
+            
+            // Update message
+            if (messageElement) {
+                messageElement.textContent = step.message;
+            }
+        }, step.delay);
+    });
+}
+
+function resetVideoProgress() {
+    const steps = ['video-step-1', 'video-step-2', 'video-step-3', 'video-step-4', 'video-step-5'];
+    steps.forEach(stepId => {
+        const step = document.getElementById(stepId);
+        if (step) {
+            step.classList.remove('active', 'completed');
+        }
+    });
+    
+    // Reset first step to active
+    const firstStep = document.getElementById('video-step-1');
+    if (firstStep) {
+        firstStep.classList.add('active');
+    }
+    
+    const messageElement = document.getElementById('video-progress-message');
+    if (messageElement) {
+        messageElement.textContent = 'Preparing video analysis...';
     }
 }
 
@@ -1846,3 +2295,94 @@ document.addEventListener('touchend', function(event) {
         event.target.click();
     }
 });
+// Tes
+//functions for debugging progress indicators
+function testTextProgress() {
+    console.log('🧪 Testing text progress indicator...');
+    console.log('🔍 Checking if elements exist...');
+    
+    const progress = document.getElementById('text-progress');
+    if (progress) {
+        console.log('✅ Progress element found');
+        console.log('📊 Current state:', {
+            classes: progress.className,
+            display: getComputedStyle(progress).display,
+            visibility: getComputedStyle(progress).visibility
+        });
+        
+        // Force show immediately for testing
+        progress.classList.remove('hidden');
+        progress.style.display = 'flex';
+        progress.style.visibility = 'visible';
+        progress.style.opacity = '1';
+        progress.style.background = '#1e2347';
+        progress.style.border = '2px solid #667eea';
+        progress.style.padding = '1rem';
+        progress.style.borderRadius = '12px';
+        progress.style.marginTop = '1rem';
+        
+        console.log('🎯 Progress indicator should now be visible!');
+        
+        setTimeout(() => {
+            setTextLoading(true);
+        }, 500);
+        
+        setTimeout(() => {
+            setTextLoading(false);
+            console.log('✅ Text progress test completed');
+        }, 6000);
+    } else {
+        console.error('❌ Progress element not found!');
+    }
+}
+
+function testImageProgress() {
+    console.log('🧪 Testing image progress indicator...');
+    setImageLoading(true);
+    setTimeout(() => {
+        setImageLoading(false);
+        console.log('✅ Image progress test completed');
+    }, 4000);
+}
+
+function testVideoProgress() {
+    console.log('🧪 Testing video progress indicator...');
+    setVideoLoading(true);
+    setTimeout(() => {
+        setVideoLoading(false);
+        console.log('✅ Video progress test completed');
+    }, 10000);
+}
+
+// Make test functions available globally for console testing
+window.testTextProgress = testTextProgress;
+window.testImageProgress = testImageProgress;
+window.testVideoProgress = testVideoProgress;
+
+console.log('🔧 Progress indicator test functions loaded. Try:');
+console.log('  - testTextProgress()');
+console.log('  - testImageProgress()');
+console.log('  - testVideoProgress()');
+
+// Auto-test progress indicators on page load
+setTimeout(() => {
+    console.log('🚀 Running automatic progress indicator test...');
+    const progress = document.getElementById('text-progress');
+    if (progress) {
+        console.log('✅ Found text progress element, testing visibility...');
+        progress.style.display = 'flex';
+        progress.style.background = '#1e2347';
+        progress.style.border = '2px solid #667eea';
+        progress.style.padding = '1rem';
+        progress.style.borderRadius = '12px';
+        progress.style.marginTop = '1rem';
+        progress.classList.remove('hidden');
+        
+        setTimeout(() => {
+            progress.classList.add('hidden');
+            console.log('✅ Auto-test completed - progress indicators should work');
+        }, 2000);
+    } else {
+        console.error('❌ Auto-test failed - progress element not found');
+    }
+}, 2000);

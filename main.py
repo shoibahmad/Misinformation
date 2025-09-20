@@ -56,6 +56,11 @@ async def root():
     """Serve the main HTML page"""
     return FileResponse("static/index.html")
 
+@app.get("/test_progress.html")
+async def test_progress():
+    """Serve the progress indicator test page"""
+    return FileResponse("test_progress.html")
+
 @app.get("/favicon.ico")
 async def favicon():
     """Return empty response for favicon"""
@@ -248,14 +253,14 @@ async def debug_info():
             "NEWSAPI_KEY": "Set" if os.getenv('NEWSAPI_KEY') else "Not set", 
             "FACTCHECK_API_KEY": "Set" if os.getenv('FACTCHECK_API_KEY') else "Not set"
         },
-        "port": 8003,
+        "port": 8005,
         "status": "running"
     }
 
 if __name__ == "__main__":
     import uvicorn
-    PORT = 8003
-    print("🚀 Starting CyberGuard AI Detector...")
+    PORT = 8005  # Changed from 8003 to 8005 to avoid conflicts
+    print("🚀 Starting TruthGuard AI Detector...")
     print("=" * 60)
     print(f"🌐 Main Application: http://localhost:{PORT}")
     print(f"📝 Text Analysis: http://localhost:{PORT}")
@@ -264,6 +269,7 @@ if __name__ == "__main__":
     print(f"📚 API Documentation: http://localhost:{PORT}/docs")
     print(f"❤️  Health Check: http://localhost:{PORT}/health")
     print(f"🔧 Debug Info: http://localhost:{PORT}/debug")
+    print(f"🧪 Progress Test: http://localhost:{PORT}/test_progress.html")
     print("=" * 60)
     print("Press Ctrl+C to stop the server")
     print()

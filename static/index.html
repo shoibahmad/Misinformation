@@ -7,10 +7,13 @@
     <title>TruthGuard AI - Advanced Misinformation & Deepfake Detection Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 
 <body>
@@ -108,12 +111,15 @@
                 <div class="hero-section">
                     <div class="hero-content">
                         <h1 class="hero-title">
-                            Detect <span class="gradient-text">Misinformation</span> & <span class="gradient-text">Deepfakes</span>
+                            Detect <span class="gradient-text">Misinformation</span> & <span
+                                class="gradient-text">Deepfakes</span>
                             <br>with Advanced AI
                         </h1>
                         <p class="hero-subtitle">
-                            Powered by Google Gemini AI, our platform provides real-time analysis of text, images, and videos
-                            to identify fake news, manipulated media, and synthetic content with industry-leading accuracy.
+                            Powered by Google Gemini AI, our platform provides real-time analysis of text, images, and
+                            videos
+                            to identify fake news, manipulated media, and synthetic content with industry-leading
+                            accuracy.
                         </p>
                         <div class="hero-metrics">
                             <div class="metric">
@@ -153,7 +159,8 @@
                                     <h3>Text Analysis</h3>
                                     <div class="accuracy-badge">98.5% Accurate</div>
                                 </div>
-                                <p>Advanced NLP analysis to detect fake news, misinformation, and manipulated narratives using linguistic patterns and fact-checking APIs</p>
+                                <p>Advanced NLP analysis to detect fake news, misinformation, and manipulated narratives
+                                    using linguistic patterns and fact-checking APIs</p>
                                 <div class="option-features">
                                     <div class="feature-tag">
                                         <i class="fas fa-brain"></i>
@@ -191,7 +198,8 @@
                                     <h3>Image Analysis</h3>
                                     <div class="accuracy-badge">99.1% Accurate</div>
                                 </div>
-                                <p>Computer vision algorithms to detect deepfakes, face swaps, and AI-generated images with pixel-level analysis and metadata examination</p>
+                                <p>Computer vision algorithms to detect deepfakes, face swaps, and AI-generated images
+                                    with pixel-level analysis and metadata examination</p>
                                 <div class="option-features">
                                     <div class="feature-tag">
                                         <i class="fas fa-eye"></i>
@@ -229,7 +237,8 @@
                                     <h3>Video Analysis</h3>
                                     <div class="accuracy-badge">97.8% Accurate</div>
                                 </div>
-                                <p>Frame-by-frame analysis to detect deepfake videos, face swaps, and synthetic media using temporal consistency algorithms</p>
+                                <p>Frame-by-frame analysis to detect deepfake videos, face swaps, and synthetic media
+                                    using temporal consistency algorithms</p>
                                 <div class="option-features">
                                     <div class="feature-tag">
                                         <i class="fas fa-film"></i>
@@ -267,7 +276,8 @@
                             </div>
                             <div class="header-content">
                                 <h2>Advanced Text Analysis</h2>
-                                <p>Multi-layered AI analysis combining linguistic patterns, sentiment analysis, and real-time fact-checking</p>
+                                <p>Multi-layered AI analysis combining linguistic patterns, sentiment analysis, and
+                                    real-time fact-checking</p>
                                 <div class="analysis-badges">
                                     <span class="badge badge-ai">Google Gemini AI</span>
                                     <span class="badge badge-fact">Fact Check API</span>
@@ -301,22 +311,46 @@
                                             <i class="fas fa-brain"></i>
                                             <span>Analyze with AI</span>
                                         </span>
-                                        <div id="text-spinner" class="spinner hidden">
-                                            <div class="spinner-ring"></div>
-                                            <span>Analyzing...</span>
-                                        </div>
                                     </div>
                                     <div class="btn-glow"></div>
                                 </button>
+
+                                <!-- Progress Indicator (outside button) -->
+                                <div id="text-progress" class="progress-indicator hidden">
+                                    <div class="progress-steps">
+                                        <div class="progress-step active" id="text-step-1">
+                                            <i class="fas fa-file-text"></i>
+                                            <span>Processing text...</span>
+                                        </div>
+                                        <div class="progress-step" id="text-step-2">
+                                            <i class="fas fa-brain"></i>
+                                            <span>AI analysis...</span>
+                                        </div>
+                                        <div class="progress-step" id="text-step-3">
+                                            <i class="fas fa-search"></i>
+                                            <span>Fact checking...</span>
+                                        </div>
+                                        <div class="progress-step" id="text-step-4">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Finalizing...</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-message" id="text-progress-message">Starting analysis...</div>
+                                </div>
                                 <div class="quick-actions">
                                     <button class="quick-btn" onclick="clearText()" title="Clear Text">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                    <button class="quick-btn" onclick="pasteFromClipboard()" title="Paste from Clipboard">
+                                    <button class="quick-btn" onclick="pasteFromClipboard()"
+                                        title="Paste from Clipboard">
                                         <i class="fas fa-clipboard"></i>
                                     </button>
                                     <button class="quick-btn" onclick="loadSample()" title="Load Sample">
                                         <i class="fas fa-file-import"></i>
+                                    </button>
+                                    <button class="quick-btn" onclick="testTextProgress()"
+                                        title="Test Progress Indicator" style="background: #667eea;">
+                                        <i class="fas fa-play"></i>
                                     </button>
                                 </div>
                             </div>
@@ -350,7 +384,8 @@
                             </div>
                             <div class="header-content">
                                 <h2>Advanced Image Analysis</h2>
-                                <p>State-of-the-art computer vision to detect deepfakes, face manipulation, and AI-generated content</p>
+                                <p>State-of-the-art computer vision to detect deepfakes, face manipulation, and
+                                    AI-generated content</p>
                                 <div class="analysis-badges">
                                     <span class="badge badge-vision">Computer Vision</span>
                                     <span class="badge badge-deepfake">Deepfake Detection</span>
@@ -367,8 +402,10 @@
                                     <div class="label-badge">Vision AI</div>
                                 </label>
 
-                                <div class="file-upload-zone advanced" onclick="document.getElementById('image-input').click()">
-                                    <input type="file" id="image-input" accept="image/*" onchange="handleImageSelect()" hidden>
+                                <div class="file-upload-zone advanced"
+                                    onclick="document.getElementById('image-input').click()">
+                                    <input type="file" id="image-input" accept="image/*" onchange="handleImageSelect()"
+                                        hidden>
                                     <div id="upload-placeholder" class="upload-placeholder">
                                         <div class="upload-animation">
                                             <div class="upload-icon">
@@ -393,19 +430,40 @@
                             </div>
 
                             <div class="action-section">
-                                <button id="analyze-image-btn" class="analyze-btn secondary" onclick="analyzeImage()" disabled>
+                                <button id="analyze-image-btn" class="analyze-btn secondary" onclick="analyzeImage()"
+                                    disabled>
                                     <div class="btn-content">
                                         <span id="image-btn-text">
                                             <i class="fas fa-eye"></i>
                                             <span>Analyze Image</span>
                                         </span>
-                                        <div id="image-spinner" class="spinner hidden">
-                                            <div class="spinner-ring"></div>
-                                            <span>Scanning...</span>
-                                        </div>
                                     </div>
                                     <div class="btn-glow"></div>
                                 </button>
+
+                                <!-- Progress Indicator (outside button) -->
+                                <div id="image-progress" class="progress-indicator hidden">
+                                    <div class="progress-steps">
+                                        <div class="progress-step active" id="image-step-1">
+                                            <i class="fas fa-upload"></i>
+                                            <span>Uploading image...</span>
+                                        </div>
+                                        <div class="progress-step" id="image-step-2">
+                                            <i class="fas fa-eye"></i>
+                                            <span>Vision analysis...</span>
+                                        </div>
+                                        <div class="progress-step" id="image-step-3">
+                                            <i class="fas fa-search"></i>
+                                            <span>Deepfake detection...</span>
+                                        </div>
+                                        <div class="progress-step" id="image-step-4">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Generating report...</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-message" id="image-progress-message">Preparing image
+                                        analysis...</div>
+                                </div>
                             </div>
 
                             <div class="input-help">
@@ -437,7 +495,8 @@
                             </div>
                             <div class="header-content">
                                 <h2>Advanced Video Analysis</h2>
-                                <p>Frame-by-frame analysis using temporal consistency algorithms to detect sophisticated video manipulation</p>
+                                <p>Frame-by-frame analysis using temporal consistency algorithms to detect sophisticated
+                                    video manipulation</p>
                                 <div class="analysis-badges">
                                     <span class="badge badge-temporal">Temporal Analysis</span>
                                     <span class="badge badge-frame">Frame Detection</span>
@@ -454,8 +513,10 @@
                                     <div class="label-badge">Frame AI</div>
                                 </label>
 
-                                <div class="file-upload-zone advanced" onclick="document.getElementById('video-input').click()">
-                                    <input type="file" id="video-input" accept="video/*" onchange="handleVideoSelect()" hidden>
+                                <div class="file-upload-zone advanced"
+                                    onclick="document.getElementById('video-input').click()">
+                                    <input type="file" id="video-input" accept="video/*" onchange="handleVideoSelect()"
+                                        hidden>
                                     <div id="video-upload-placeholder" class="upload-placeholder">
                                         <div class="upload-animation">
                                             <div class="upload-icon">
@@ -480,19 +541,44 @@
                             </div>
 
                             <div class="action-section">
-                                <button id="analyze-video-btn" class="analyze-btn tertiary" onclick="analyzeVideo()" disabled>
+                                <button id="analyze-video-btn" class="analyze-btn tertiary" onclick="analyzeVideo()"
+                                    disabled>
                                     <div class="btn-content">
                                         <span id="video-btn-text">
                                             <i class="fas fa-film"></i>
                                             <span>Analyze Video</span>
                                         </span>
-                                        <div id="video-spinner" class="spinner hidden">
-                                            <div class="spinner-ring"></div>
-                                            <span>Processing...</span>
-                                        </div>
                                     </div>
                                     <div class="btn-glow"></div>
                                 </button>
+
+                                <!-- Progress Indicator (outside button) -->
+                                <div id="video-progress" class="progress-indicator hidden">
+                                    <div class="progress-steps">
+                                        <div class="progress-step active" id="video-step-1">
+                                            <i class="fas fa-upload"></i>
+                                            <span>Uploading video...</span>
+                                        </div>
+                                        <div class="progress-step" id="video-step-2">
+                                            <i class="fas fa-film"></i>
+                                            <span>Extracting frames...</span>
+                                        </div>
+                                        <div class="progress-step" id="video-step-3">
+                                            <i class="fas fa-brain"></i>
+                                            <span>AI analysis...</span>
+                                        </div>
+                                        <div class="progress-step" id="video-step-4">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>Processing results...</span>
+                                        </div>
+                                        <div class="progress-step" id="video-step-5">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Finalizing report...</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-message" id="video-progress-message">Preparing video
+                                        analysis...</div>
+                                </div>
                             </div>
 
                             <div class="input-help">
@@ -720,7 +806,8 @@
                             <i class="fas fa-shield-halved"></i>
                             <span>TruthGuard AI</span>
                         </div>
-                        <p>Advanced AI-powered platform for detecting misinformation, deepfakes, and manipulated media content.</p>
+                        <p>Advanced AI-powered platform for detecting misinformation, deepfakes, and manipulated media
+                            content.</p>
                     </div>
                     <div class="footer-links">
                         <div class="link-group">
@@ -757,7 +844,8 @@
                 </div>
                 <div class="footer-bottom">
                     <div class="footer-info">
-                        <p>&copy; 2024 TruthGuard AI Platform. Built with FastAPI, Google Gemini AI & Advanced ML Models.</p>
+                        <p>&copy; 2024 TruthGuard AI Platform. Built with FastAPI, Google Gemini AI & Advanced ML
+                            Models.</p>
                         <div class="tech-badges">
                             <span class="tech-badge">FastAPI</span>
                             <span class="tech-badge">Google Gemini</span>

@@ -1,89 +1,57 @@
 #!/usr/bin/env python3
 """
-Smart server startup script for the AI Misinformation & Deepfake Detection Tool
-Automatically handles port conflicts and finds available ports
+TruthGuard AI - Startup Script
+Starts the server on port 8005 with enhanced debugging
 """
 
-import uvicorn
-import socket
+import os
 import sys
-from main import app
+import subprocess
+import time
 
-def find_available_port(start_port=8000, max_attempts=10):
-    """Find an available port starting from start_port"""
-    for port in range(start_port, start_port + max_attempts):
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(('localhost', port))
-                return port
-        except OSError:
-            continue
+def main():
+    print("🚀 TruthGuard AI - Enhanced Startup Script")
+    print("=" * 60)
+    print("🔧 Port: 8005 (Changed from 8003 to avoid conflicts)")
+    print("🧪 Progress Indicators: Enhanced with debugging")
+    print("📊 Test Page: http://localhost:8005/test_progress.html")
+    print("=" * 60)
     
-    raise RuntimeError(f"No available ports found in range {start_port}-{start_port + max_attempts}")
-
-def kill_existing_process(port):
-    """Kill any existing process using the specified port"""
-    import subprocess
-    import os
+    # Check if required files exist
+    required_files = [
+        "main.py",
+        "static/index.html", 
+        "static/script.js",
+        "static/style.css"
+    ]
     
-    try:
-        if os.name == 'nt':  # Windows
-            result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
-            lines = result.stdout.split('\n')
-            
-            for line in lines:
-                if f':{port}' in line and 'LISTENING' in line:
-                    parts = line.split()
-                    if len(parts) >= 5:
-                        pid = parts[-1]
-                        if pid.isdigit():
-                            subprocess.run(['taskkill', '/PID', pid, '/F'], check=True)
-                            print(f"🧹 Killed existing process {pid} on port {port}")
-                            return True
-        return False
-    except Exception:
-        return False
-
-if __name__ == "__main__":
-    DEFAULT_PORT = 8003
+    missing_files = []
+    for file in required_files:
+        if not os.path.exists(file):
+            missing_files.append(file)
     
-    print("🚀 Starting AI-Powered Misinformation & Deepfake Detection Tool...")
-    print("=" * 70)
+    if missing_files:
+        print("❌ Missing required files:")
+        for file in missing_files:
+            print(f"   - {file}")
+        return 1
     
-    # Try to find an available port
-    try:
-        port = find_available_port(DEFAULT_PORT)
-        
-        if port != DEFAULT_PORT:
-            print(f"⚠️  Port {DEFAULT_PORT} is busy, using port {port}")
-        else:
-            print(f"✅ Using port {DEFAULT_PORT}")
-        
-    except RuntimeError as e:
-        print(f"❌ {e}")
-        print("💡 Try a different port or kill existing processes")
-        sys.exit(1)
-    
-    print(f"🌐 Main Interface: http://localhost:{port}")
-    print(f"🔍 API Status: http://localhost:{port}/api/status")
-    print(f"🧪 Debug Info: http://localhost:{port}/debug")
-    print(f"📚 API Documentation: http://localhost:{port}/docs")
-    print(f"❤️  Health Check: http://localhost:{port}/health")
-    print("=" * 70)
-    print("🎯 Open http://localhost:{} in your browser to start!".format(port))
-    print("Press Ctrl+C to stop the server")
+    print("✅ All required files found")
+    print("🔄 Starting server...")
     print()
     
     try:
-        uvicorn.run(
-            app, 
-            host="0.0.0.0", 
-            port=port, 
-            reload=False,  # Disable reload to prevent issues
-            log_level="info"
-        )
+        # Start the server
+        subprocess.run([sys.executable, "main.py"], check=True)
     except KeyboardInterrupt:
-        print("\n👋 Server stopped. Goodbye!")
+        print("\n👋 Server stopped by user")
+        return 0
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Server failed to start: {e}")
+        return 1
     except Exception as e:
-        print(f"❌ Error starting server: {e}")
-        print("💡 Make sure all dependencies are installed: pip install -r requirements.txt")
+        print(f"❌ Unexpected error: {e}")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
