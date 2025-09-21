@@ -52,10 +52,13 @@ A comprehensive AI-powered tool for detecting misinformation, fake news, and dee
 3. **Configure API Keys**
    Create a `.env` file in the root directory:
    ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
+   GEMINI_API_KEY=your_primary_gemini_api_key_here
+   GEMINI_API_KEY_BACKUP=your_backup_gemini_api_key_here
    NEWSAPI_KEY=your_newsapi_key_here
    FACTCHECK_API_KEY=your_google_cloud_api_key_here
    ```
+   
+   **Note:** The backup Gemini API key is optional but recommended. If the primary key hits quota limits, the system will automatically switch to the backup key.
 
 4. **Run the application**
    ```bash

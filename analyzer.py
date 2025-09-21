@@ -33,6 +33,8 @@ class MisinformationAnalyzer:
         self.newsapi_key = os.getenv('NEWSAPI_KEY', '1aef5e04e84643a889ba8e0f377e196b')
         self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyAouVSfu1BO_oYrOIOXoMuegrf3Oj1ceqk')  # Use proper Google Cloud API key
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyD3adGsM5dxI_OytL68ePc4eeQRwrpwx80')
+        self.gemini_api_key_backup = os.getenv('GEMINI_API_KEY_BACKUP', 'AIzaSyDsgF6LR0JEYR51rlYgVmMMKnSMhpHSSHE')
+        self.current_gemini_key = self.gemini_api_key  # Track which key is currently active
         
         # Configure Google Gemini
         if self.gemini_api_key and len(self.gemini_api_key) > 20:
@@ -88,6 +90,69 @@ class MisinformationAnalyzer:
             'reuters.com', 'ap.org', 'bbc.com', 'npr.org',
             'pbs.org', 'cnn.com', 'nytimes.com', 'washingtonpost.com'
         ]
+
+    def _switch_to_backup_gemini_key(self):
+        """Switch to backup Gemini API key when primary key hits quota limit"""
+        if self.current_gemini_key == self.gemini_api_key and self.gemini_api_key_backup:
+            print("🔄 Switching to backup Gemini API key due to quota limit...")
+            self.current_gemini_key = self.gemini_api_key_backup
+            try:
+                genai.configure(api_key=self.current_gemini_key)
+                
+                # Reinitialize the model with backup key
+                model_names = [
+                    'gemini-1.5-flash',
+                    'gemini-1.5-pro', 
+                    'gemini-1.0-pro-vision-latest',
+                    'gemini-1.0-pro-vision',
+                    'gemini-pro-vision',
+                    'gemini-pro'
+                ]
+                
+                for model_name in model_names:
+                    try:
+                        self.gemini_model = genai.GenerativeModel(model_name)
+                        print(f"✅ Backup Gemini API configured successfully with model: {model_name}")
+                        return True
+                    except Exception as model_error:
+                        continue
+                        
+                print("❌ Backup Gemini API key also failed")
+                return False
+                
+            except Exception as e:
+                print(f"❌ Failed to switch to backup Gemini API key: {e}")
+                return False
+        return False
+
+    async def _safe_gemini_call(self, prompt_data):
+        """Safely make Gemini API calls with automatic fallback to backup key"""
+        if not self.gemini_model:
+            raise Exception("Gemini model not initialized")
+            
+        try:
+            if isinstance(prompt_data, list):
+                # For vision models with image and text
+                return await asyncio.to_thread(self.gemini_model.generate_content, prompt_data)
+            else:
+                # For text-only prompts
+                return await asyncio.to_thread(self.gemini_model.generate_content, prompt_data)
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Check if it's a quota/rate limit error
+            if any(keyword in error_msg for keyword in ['quota', 'rate limit', 'resource_exhausted', 'limit exceeded']):
+                print(f"⚠️ Gemini API quota exceeded: {e}")
+                if self._switch_to_backup_gemini_key():
+                    print("🔄 Retrying with backup API key...")
+                    if isinstance(prompt_data, list):
+                        return await asyncio.to_thread(self.gemini_model.generate_content, prompt_data)
+                    else:
+                        return await asyncio.to_thread(self.gemini_model.generate_content, prompt_data)
+                else:
+                    raise Exception("Both primary and backup Gemini API keys have exceeded quota limits")
+            else:
+                # Re-raise non-quota related errors
+                raise e
 
     async def analyze_text_comprehensive(self, text: str) -> Dict[str, Any]:
         """Comprehensive text analysis using multiple approaches"""
@@ -269,9 +334,7 @@ class MisinformationAnalyzer:
             Be thorough, decisive, and provide actionable insights. Use clear, professional language.
             """
             
-            response = await asyncio.to_thread(
-                self.gemini_model.generate_content, prompt
-            )
+            response = await self._safe_gemini_call(prompt)
             
             # Extract verdict and risk level from response
             response_text = response.text.lower()
@@ -715,9 +778,7 @@ class MisinformationAnalyzer:
             print("🔍 Running Gemini analysis...")
             try:
                 # Try with image and text (for vision-capable models)
-                response = await asyncio.to_thread(
-                    self.gemini_model.generate_content, [prompt, image]
-                )
+                response = await self._safe_gemini_call([prompt, image])
             except Exception as vision_error:
                 print(f"⚠️ Vision analysis failed: {vision_error}")
                 # Fallback to text-only analysis
@@ -727,9 +788,7 @@ class MisinformationAnalyzer:
                 Note: Image analysis is being performed on a technical level only due to model limitations.
                 Please provide general guidance for image authenticity verification.
                 """
-                response = await asyncio.to_thread(
-                    self.gemini_model.generate_content, text_prompt
-                )
+                response = await self._safe_gemini_call(text_prompt)
             
             # OPTIMIZATION: Skip technical analysis in fast mode
             if fast_mode:
@@ -1286,9 +1345,7 @@ class MisinformationAnalyzer:
             # Load first frame as representative sample for Gemini
             first_frame = Image.open(frame_data[0]['path'])
             
-            response = await asyncio.to_thread(
-                self.gemini_model.generate_content, [prompt, first_frame]
-            )
+            response = await self._safe_gemini_call([prompt, first_frame])
             
             # Parse response efficiently
             response_text = response.text.lower()
@@ -1412,9 +1469,7 @@ class MisinformationAnalyzer:
             Be thorough and decisive. With {total_frames} frames analyzed, you have {"excellent" if total_frames >= 12 else "good" if total_frames >= 10 else "adequate" if total_frames >= 8 else "limited"} data for analysis.
             """
             
-            response = await asyncio.to_thread(
-                self.gemini_model.generate_content, prompt
-            )
+            response = await self._safe_gemini_call(prompt)
             
             # Enhanced response parsing
             response_text = response.text.lower()
