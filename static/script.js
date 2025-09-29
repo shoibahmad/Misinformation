@@ -1139,13 +1139,8 @@ function displayTextResults(result) {
         riskPercentage.textContent = `${percentage}%`;
     }
 
-    // Update risk meter
-    const riskMeter = document.getElementById('risk-meter-fill');
-    if (riskMeter) {
-        const score = result.misinformation_score || 0;
-        riskMeter.style.width = `${score * 100}%`;
-        riskMeter.className = `meter-fill ${riskLevel.className}`;
-    }
+    // Update risk meter with visibility safeguards
+    updateRiskMeter(result.misinformation_score || 0, riskLevel.className);
 
     const scoresElement = document.getElementById('scores');
     if (scoresElement) {
@@ -1433,13 +1428,8 @@ function displayImageResults(result) {
         riskPercentage.textContent = `${percentage}%`;
     }
 
-    // Update risk meter
-    const riskMeter = document.getElementById('risk-meter-fill');
-    if (riskMeter) {
-        const score = result.deepfake_score || 0;
-        riskMeter.style.width = `${score * 100}%`;
-        riskMeter.className = `meter-fill ${riskLevel.className}`;
-    }
+    // Update risk meter with visibility safeguards
+    updateRiskMeter(result.deepfake_score || 0, riskLevel.className);
 
     const scoresElement = document.getElementById('scores');
     if (scoresElement) {
@@ -1589,13 +1579,8 @@ function displayVideoResults(result) {
         riskPercentage.textContent = `${percentage}%`;
     }
 
-    // Update risk meter
-    const riskMeter = document.getElementById('risk-meter-fill');
-    if (riskMeter) {
-        const score = result.deepfake_score || 0;
-        riskMeter.style.width = `${score * 100}%`;
-        riskMeter.className = `meter-fill ${riskLevel.className}`;
-    }
+    // Update risk meter with visibility safeguards
+    updateRiskMeter(result.deepfake_score || 0, riskLevel.className);
 
     const scoresElement = document.getElementById('scores');
     if (scoresElement) {
@@ -1628,23 +1613,69 @@ function displayVideoResults(result) {
 
     // Analysis details for video
     let analysisHTML = '';
-    
-    // Check for Gemini analysis in the correct location
+
+    // Prefer new detailed fields if present
     const geminiAnalysis = result.analysis?.gemini_analysis;
-    if (geminiAnalysis && geminiAnalysis.analysis) {
-        const verdict = geminiAnalysis.deepfake_verdict || 'UNKNOWN';
-        const confidence = geminiAnalysis.confidence || 0;
-        
-        // Determine verdict color
-        let verdictClass = 'neutral';
-        if (verdict.includes('FAKE') || verdict.includes('MANIPULATED')) {
-            verdictClass = 'high';
-        } else if (verdict.includes('AUTHENTIC') || verdict.includes('GENUINE')) {
-            verdictClass = 'low';
-        } else if (verdict.includes('LIKELY') || verdict.includes('POSSIBLY')) {
-            verdictClass = 'moderate';
+    const videoProps = result.analysis?.video_properties;
+    const frameAnalysis = result.analysis?.frame_analysis;
+
+    // Fallback aggregation from frame_analyses when backend doesn't provide video-level Gemini data
+    const frameAnalyses = Array.isArray(result.frame_analyses) ? result.frame_analyses : [];
+    let aggregatedGeminiText = '';
+    let aggregatedVerdicts = [];
+    let aggregatedConfidences = [];
+
+    if (!geminiAnalysis && frameAnalyses.length > 0) {
+        aggregatedGeminiText = frameAnalyses
+            .map((fa, idx) => {
+                // Try multiple locations for AI text
+                const perFrameGemini = fa?.analysis?.gemini_analysis?.analysis || fa?.ai_analysis || fa?.analysis;
+                const header = `Frame ${idx + 1}`;
+                return perFrameGemini ? `${header}: ${String(perFrameGemini)}` : '';
+            })
+            .filter(Boolean)
+            .join('\n\n');
+
+        aggregatedVerdicts = frameAnalyses
+            .map(fa => fa?.analysis?.gemini_analysis?.deepfake_verdict || fa?.deepfake_verdict)
+            .filter(Boolean);
+
+        aggregatedConfidences = frameAnalyses
+            .map(fa => fa?.analysis?.gemini_analysis?.confidence || fa?.confidence)
+            .filter(c => typeof c === 'number');
+    }
+
+    // Determine verdict and confidence to show
+    let verdict = geminiAnalysis?.deepfake_verdict || 'UNKNOWN';
+    let confidence = geminiAnalysis?.confidence || 0;
+
+    if (!geminiAnalysis && aggregatedVerdicts.length > 0) {
+        // Majority verdict from frames
+        const tally = aggregatedVerdicts.reduce((acc, v) => {
+            const key = String(v).toUpperCase();
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        verdict = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
+        // Average confidence from frames
+        if (aggregatedConfidences.length > 0) {
+            confidence = Math.round(aggregatedConfidences.reduce((a, b) => a + b, 0) / aggregatedConfidences.length);
         }
-        
+    }
+
+    // Determine verdict color
+    let verdictClass = 'neutral';
+    if (String(verdict).includes('FAKE') || String(verdict).includes('MANIPULATED')) {
+        verdictClass = 'high';
+    } else if (String(verdict).includes('AUTHENTIC') || String(verdict).includes('GENUINE')) {
+        verdictClass = 'low';
+    } else if (String(verdict).includes('LIKELY') || String(verdict).includes('POSSIBLY')) {
+        verdictClass = 'moderate';
+    }
+
+    // Render Gemini analysis section when we have either direct or aggregated text
+    if ((geminiAnalysis && geminiAnalysis.analysis) || aggregatedGeminiText) {
+        const fullText = geminiAnalysis?.analysis || aggregatedGeminiText;
         analysisHTML += `
             <div class="analysis-section">
                 <h4><i class="fas fa-brain"></i> AI Video Analysis</h4>
@@ -1663,19 +1694,20 @@ function displayVideoResults(result) {
                         <i class="fas fa-robot"></i>
                         <span>Gemini AI Video Analysis</span>
                     </div>
-                    <div style="color: var(--text-primary); line-height: 1.6;">
-                        ${geminiAnalysis.analysis.replace(/\n/g, '<br>')}
+                    <div style="color: var(--text-primary); line-height: 1.6; white-space: normal;">
+                        ${String(fullText).replace(/\n/g, '<br>')}
                     </div>
                 </div>
             </div>
         `;
     }
 
-    // Technical analysis from the correct location
-    const videoProps = result.analysis?.video_properties;
-    const frameAnalysis = result.analysis?.frame_analysis;
-    
-    if (videoProps || frameAnalysis) {
+    // Technical video information - prefer structured props, else fall back to high-level counts
+    if (videoProps || frameAnalysis || frameAnalyses.length > 0 || typeof result.frames_analyzed === 'number') {
+        const framesAnalyzed = frameAnalysis?.frames_analyzed || result.frames_analyzed || frameAnalyses.length || 'Unknown';
+        const highRisk = result.high_risk_frames ?? (frameAnalysis?.high_risk_frames) ?? 0;
+        const mediumRisk = result.medium_risk_frames ?? (frameAnalysis?.medium_risk_frames) ?? 0;
+
         analysisHTML += `
             <div class="analysis-section">
                 <h4><i class="fas fa-cogs"></i> Technical Video Analysis</h4>
@@ -1694,7 +1726,15 @@ function displayVideoResults(result) {
                     </div>
                     <div class="analysis-item">
                         <span>Frames Analyzed</span>
-                        <span style="font-weight: 600; color: var(--text-primary);">${frameAnalysis?.frames_analyzed || 'Unknown'}</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">${framesAnalyzed}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>High-Risk Frames</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">${highRisk}</span>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Medium-Risk Frames</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">${mediumRisk}</span>
                     </div>
                 </div>
             </div>
@@ -1772,6 +1812,19 @@ function getRiskLevel(score) {
     } else {
         return { level: 'High Risk', className: 'risk-high' };
     }
+}
+
+// Safely updates the shared risk meter UI across all analysis types
+function updateRiskMeter(score, riskClass) {
+    const fill = document.getElementById('risk-meter-fill');
+    if (!fill) return;
+    const clamped = Math.max(0, Math.min(1, Number(score) || 0));
+    const percent = Math.round(clamped * 100);
+    // Keep a minimal visible bar at 1% so users can see the track color
+    fill.style.width = percent === 0 ? '1%' : `${percent}%`;
+    fill.className = `meter-fill ${riskClass}`;
+    const label = document.getElementById('risk-percentage');
+    if (label) label.textContent = `${percent}%`;
 }
 
 // Utility functions
