@@ -33,9 +33,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Initialize analyzer (database removed)
 try:
     analyzer = MisinformationAnalyzer()
-    print("✅ Analyzer initialized successfully")
+    print("Analyzer initialized successfully")
 except Exception as e:
-    print(f"⚠️ Warning: Analyzer initialization failed: {e}")
+    print(f"Warning: Analyzer initialization failed: {e}")
     analyzer = None
 
 # Pydantic models
@@ -74,10 +74,10 @@ async def health_check():
 async def get_api_status():
     """Get the status of all configured APIs"""
     try:
-        print("🔍 API Status endpoint called")
+        print("API Status endpoint called")
         
         if analyzer is None:
-            print("⚠️ Analyzer is None")
+            print("Analyzer is None")
             return {
                 "gemini_available": False,
                 "newsapi_available": False,
@@ -90,7 +90,7 @@ async def get_api_status():
         newsapi_available = bool(os.getenv('NEWSAPI_KEY'))
         factcheck_available = bool(os.getenv('FACTCHECK_API_KEY'))
         
-        print(f"📊 API Status: Gemini={gemini_available}, NewsAPI={newsapi_available}, FactCheck={factcheck_available}")
+        print(f"API Status: Gemini={gemini_available}, NewsAPI={newsapi_available}, FactCheck={factcheck_available}")
         
         return {
             "gemini_available": gemini_available,
@@ -99,7 +99,7 @@ async def get_api_status():
             "analyzer_ready": True
         }
     except Exception as e:
-        print(f"❌ Error in API status: {e}")
+        print(f"Error in API status: {e}")
         return {
             "gemini_available": False,
             "newsapi_available": False,
@@ -117,15 +117,23 @@ async def analyze_text(text: str = Form(...)):
         if analyzer is None:
             raise HTTPException(status_code=500, detail="Analyzer not initialized")
         
+        print(f"\n🔍 Starting text analysis for: {text[:100]}...")
+        print("📊 Running comprehensive analysis...")
+        
         result = await analyzer.analyze_text_comprehensive(text)
         
-        # Database removed: do not persist
+        print(f"✅ Analysis complete! Score: {result.get('misinformation_score', 'N/A')}")
+        print(f"🎯 Confidence: {result.get('confidence', 'N/A')}")
+        
+        gemini_analysis = result.get('analysis', {}).get('gemini_analysis', {})
+        if gemini_analysis.get('fake_news_verdict'):
+            print(f"🤖 Gemini verdict: {gemini_analysis.get('fake_news_verdict')}")
         
         return result
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Text analysis error: {e}")
+        print(f"❌ Text analysis error: {e}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.post("/api/analyze-image")
@@ -230,7 +238,10 @@ async def analyze_video(file: UploadFile = File(...)):
 @app.post("/api/analyze")
 async def analyze_legacy(request: TextAnalysisRequest):
     """Legacy text analysis endpoint"""
-    return await analyze_text(request.text)
+    print(f"\n🔍 Starting legacy text analysis for: {request.text[:100]}...")
+    result = await analyze_text(request.text)
+    print(f"✅ Legacy analysis complete!")
+    return result
 
 @app.get("/api/models")
 async def get_models():
@@ -260,16 +271,16 @@ async def debug_info():
 if __name__ == "__main__":
     import uvicorn
     PORT = 8005  # Changed from 8003 to 8005 to avoid conflicts
-    print("🚀 Starting TruthGuard AI Detector...")
+    print("Starting TruthGuard AI Detector...")
     print("=" * 60)
-    print(f"🌐 Main Application: http://localhost:{PORT}")
-    print(f"📝 Text Analysis: http://localhost:{PORT}")
-    print(f"🖼️  Image Analysis: http://localhost:{PORT}")
-    print(f"🎬 Video Analysis: http://localhost:{PORT}")
-    print(f"📚 API Documentation: http://localhost:{PORT}/docs")
-    print(f"❤️  Health Check: http://localhost:{PORT}/health")
-    print(f"🔧 Debug Info: http://localhost:{PORT}/debug")
-    print(f"🧪 Progress Test: http://localhost:{PORT}/test_progress.html")
+    print(f"Main Application: http://localhost:{PORT}")
+    print(f"Text Analysis: http://localhost:{PORT}")
+    print(f"Image Analysis: http://localhost:{PORT}")
+    print(f"Video Analysis: http://localhost:{PORT}")
+    print(f"API Documentation: http://localhost:{PORT}/docs")
+    print(f"Health Check: http://localhost:{PORT}/health")
+    print(f"Debug Info: http://localhost:{PORT}/debug")
+    print(f"Progress Test: http://localhost:{PORT}/test_progress.html")
     print("=" * 60)
     print("Press Ctrl+C to stop the server")
     print()
@@ -278,7 +289,7 @@ if __name__ == "__main__":
         # Use import string for reload to work properly
         uvicorn.run("main:app", host="0.0.0.0", port=PORT, reload=True)
     except KeyboardInterrupt:
-        print("\n👋 Server stopped. Goodbye!")
+        print("\nServer stopped. Goodbye!")
     except Exception as e:
-        print(f"❌ Error starting server: {e}")
-        print("💡 Try running: pip install -r requirements.txt")
+        print(f"Error starting server: {e}")
+        print("Try running: pip install -r requirements.txt")
