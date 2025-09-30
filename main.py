@@ -264,13 +264,13 @@ async def debug_info():
             "NEWSAPI_KEY": "Set" if os.getenv('NEWSAPI_KEY') else "Not set", 
             "FACTCHECK_API_KEY": "Set" if os.getenv('FACTCHECK_API_KEY') else "Not set"
         },
-        "port": 8005,
+        "port": 8080,
         "status": "running"
     }
 
 if __name__ == "__main__":
     import uvicorn
-    PORT = 8005  # Changed from 8003 to 8005 to avoid conflicts
+    PORT = 8080  # Changed to 8080 to avoid conflicts
     print("Starting TruthGuard AI Detector...")
     print("=" * 60)
     print(f"Main Application: http://localhost:{PORT}")

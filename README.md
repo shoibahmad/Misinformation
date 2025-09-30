@@ -66,7 +66,7 @@ A comprehensive AI-powered tool for detecting misinformation, fake news, and dee
    ```
 
 5. **Access the web interface**
-   Open your browser and navigate to `http://localhost:8003`
+   Open your browser and navigate to `http://localhost:8080`
 
 ## 🎯 How It Works
 

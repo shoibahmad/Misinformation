@@ -30,21 +30,30 @@ class MisinformationAnalyzer:
     def __init__(self):
         """Initialize the analyzer with API configurations"""
         self.newsapi_key = os.getenv('NEWSAPI_KEY', '1aef5e04e84643a889ba8e0f377e196b')
-        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyD7Dn5kdg5W_QzaSbKza8stWfx_qWt_EHc')
+        self.factcheck_api_key = os.getenv('FACTCHECK_API_KEY', 'AIzaSyA-TVdHyEDKQbZiFreOWMBK6r0hkVCP_QY')
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', 'AIzaSyDCDMiQMc7fb3T2NZUf5WeBg5bbDd7TCNg')
+        self.gemini_backup_key = os.getenv('GEMINI_API_KEY_BACKUP', 'AIzaSyB2hJtn7g6pRDytWXbMBBsETMzxTPbv26o')
         
         # Configure Google Gemini
+        self.gemini_model = None
         if self.gemini_api_key:
             try:
                 genai.configure(api_key=self.gemini_api_key)
                 self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
                 print(f"Google Gemini configured successfully")
             except Exception as e:
-                print(f"Gemini configuration failed: {e}")
-                self.gemini_model = None
-        else:
-            self.gemini_model = None
-            print("Google Gemini API key not configured - using basic analysis mode")
+                print(f"Primary Gemini key failed: {e}")
+                if self.gemini_backup_key:
+                    try:
+                        genai.configure(api_key=self.gemini_backup_key)
+                        self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+                        print(f"Backup Gemini key configured successfully")
+                    except Exception as e2:
+                        print(f"Backup Gemini key also failed: {e2}")
+                        self.gemini_model = None
+        
+        if not self.gemini_model:
+            print("Google Gemini API not configured - using basic analysis mode")
             
         # Fake news detection patterns
         self.suspicious_patterns = [
@@ -66,14 +75,20 @@ class MisinformationAnalyzer:
         
         try:
             print(f"Making Gemini API call with prompt length: {len(str(prompt_data))}")
-            response = await asyncio.to_thread(self.gemini_model.generate_content, prompt_data)
+            response = await asyncio.wait_for(
+                asyncio.to_thread(self.gemini_model.generate_content, prompt_data),
+                timeout=60.0
+            )
             print(f"Gemini API call successful")
             return response
+        except asyncio.TimeoutError:
+            print(f"Gemini API call timed out after 60 seconds")
+            raise Exception("Gemini API timeout - please try again")
         except Exception as e:
             print(f"Detailed Gemini API error: {type(e).__name__}: {e}")
-            if hasattr(e, 'details'):
-                print(f"Error details: {e.details()}")
-            raise e
+            if "quota" in str(e).lower() or "limit" in str(e).lower():
+                raise Exception("Gemini API quota exceeded")
+            raise Exception(f"Gemini API error: {str(e)}")
 
     async def analyze_text_comprehensive(self, text: str) -> Dict[str, Any]:
         """Comprehensive text analysis using multiple approaches"""
@@ -84,14 +99,31 @@ class MisinformationAnalyzer:
             # Sentiment analysis
             sentiment_analysis = self._analyze_sentiment(text)
             
-            # Gemini AI analysis for text
-            gemini_analysis = await self._analyze_text_with_gemini(text)
+            # Run API calls concurrently with timeouts
+            tasks = [
+                self._analyze_text_with_gemini(text),
+                self._check_facts_api(text),
+                self._verify_with_news_apis(text)
+            ]
             
-            # Fact-checking API calls
-            factcheck_results = await self._check_facts_api(text)
-            
-            # News verification
-            news_verification = await self._verify_with_news_apis(text)
+            try:
+                results = await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=90.0)
+                gemini_analysis, factcheck_results, news_verification = results
+                
+                # Handle exceptions in results
+                if isinstance(gemini_analysis, Exception):
+                    print(f"Gemini analysis failed: {gemini_analysis}")
+                    gemini_analysis = {'status': 'error', 'error': str(gemini_analysis), 'fake_news_verdict': 'UNKNOWN', 'confidence': 0}
+                if isinstance(factcheck_results, Exception):
+                    factcheck_results = {'error': str(factcheck_results), 'claims_found': 0}
+                if isinstance(news_verification, Exception):
+                    news_verification = {'error': str(news_verification), 'articles_found': 0}
+                    
+            except asyncio.TimeoutError:
+                print("API calls timed out after 90 seconds, using fallback values")
+                gemini_analysis = {'status': 'timeout', 'error': 'Analysis timeout - please try again', 'fake_news_verdict': 'UNKNOWN', 'confidence': 0}
+                factcheck_results = {'error': 'Timeout', 'claims_found': 0}
+                news_verification = {'error': 'Timeout', 'articles_found': 0}
             
             # Calculate overall misinformation score
             misinformation_score = self._calculate_misinformation_score(
@@ -340,22 +372,94 @@ class MisinformationAnalyzer:
         return min(1.0, score)
 
     def _generate_recommendations(self, score: float, gemini_analysis: Dict) -> List[str]:
-        """Generate recommendations based on analysis"""
+        """Generate comprehensive AI-powered recommendations based on analysis"""
         recommendations = []
         
-        if score > 0.7:
+        # Risk-based recommendations
+        if score > 0.8:
             recommendations.extend([
-                "⚠️ High risk of misinformation detected",
-                "Verify information through multiple reliable sources",
-                "Check official sources and fact-checking websites"
+                "🚨 CRITICAL: Extremely high misinformation risk detected - DO NOT SHARE without verification",
+                "🔍 Immediately fact-check through multiple independent, authoritative sources (Reuters, AP, BBC)",
+                "📞 Contact original sources directly if possible to verify claims",
+                "⚖️ Consider reporting to platform moderators if this content is spreading false information",
+                "🛡️ Warn others about potential misinformation before they encounter it"
+            ])
+        elif score > 0.6:
+            recommendations.extend([
+                "⚠️ HIGH RISK: Strong indicators of misinformation - exercise extreme caution",
+                "🔎 Verify through at least 3 independent, credible news sources before believing or sharing",
+                "📊 Check fact-checking websites (Snopes, PolitiFact, FactCheck.org) for similar claims",
+                "🏛️ Look for official statements from relevant authorities or institutions",
+                "⏰ Wait 24-48 hours before sharing - misinformation often gets debunked quickly"
             ])
         elif score > 0.4:
             recommendations.extend([
-                "⚡ Moderate risk detected - exercise caution",
-                "Cross-reference with trusted news sources"
+                "⚡ MODERATE RISK: Some suspicious patterns detected - verify before sharing",
+                "📰 Cross-reference with established news outlets and their original reporting",
+                "🔍 Check the publication date and context - old news sometimes resurfaces as current",
+                "👥 Look for expert opinions and official responses to the claims made",
+                "📱 Use reverse image search if the content includes photos or videos"
+            ])
+        elif score > 0.2:
+            recommendations.extend([
+                "✅ LOW RISK: Content appears mostly legitimate but maintain healthy skepticism",
+                "📚 Still worth verifying important claims through primary sources",
+                "🔗 Check if the source has a good track record of accurate reporting",
+                "💭 Consider the source's potential bias or agenda when interpreting information"
             ])
         else:
-            recommendations.append("✅ Content appears legitimate based on analysis")
+            recommendations.extend([
+                "✅ VERY LOW RISK: Content shows strong indicators of authenticity",
+                "📈 Analysis suggests this information is likely accurate and trustworthy",
+                "🎯 Source appears credible, but always maintain critical thinking"
+            ])
+        
+        # AI-specific recommendations based on Gemini analysis
+        if gemini_analysis.get('status') == 'success':
+            verdict = gemini_analysis.get('fake_news_verdict', '').upper()
+            confidence = gemini_analysis.get('confidence', 0)
+            
+            if 'FAKE' in verdict:
+                recommendations.extend([
+                    "🤖 AI EXPERT VERDICT: Content flagged as fake news by advanced AI analysis",
+                    "🧠 Machine learning models detected deceptive patterns in language and structure",
+                    "📋 Consider this a strong warning signal requiring immediate fact-checking"
+                ])
+            elif 'MODERATE' in verdict:
+                recommendations.extend([
+                    "🤖 AI ANALYSIS: Content shows mixed signals - some legitimate, some concerning elements",
+                    "⚖️ AI detected both authentic and potentially misleading characteristics",
+                    "🔍 Focus verification efforts on the most questionable claims identified"
+                ])
+            elif 'LEGITIMATE' in verdict:
+                recommendations.extend([
+                    "🤖 AI CONFIDENCE: Advanced analysis suggests content is authentic",
+                    "✅ Language patterns and structure align with legitimate news reporting",
+                    "📊 AI models found minimal indicators of deception or manipulation"
+                ])
+            
+            # Confidence-based recommendations
+            if confidence >= 90:
+                recommendations.append("🎯 AI CONFIDENCE: Very high confidence in analysis (90%+) - results highly reliable")
+            elif confidence >= 70:
+                recommendations.append("📊 AI CONFIDENCE: Good confidence in analysis (70%+) - results generally reliable")
+            elif confidence < 50:
+                recommendations.append("⚠️ AI UNCERTAINTY: Low confidence in analysis - seek additional verification methods")
+        else:
+            recommendations.extend([
+                "🔧 AI ANALYSIS UNAVAILABLE: Consider using additional verification tools",
+                "🌐 Try online fact-checking services and reverse image/text searches",
+                "📞 Contact experts or authorities directly for verification"
+            ])
+        
+        # General digital literacy recommendations
+        recommendations.extend([
+            "📚 DIGITAL LITERACY: Always check the source's credibility and publication history",
+            "🕒 TIMING CHECK: Verify the content's publication date and current relevance",
+            "🔗 SOURCE VERIFICATION: Look for original sources, citations, and supporting evidence",
+            "👥 EXPERT CONSENSUS: Check if multiple experts or authorities agree with the claims",
+            "🧠 CRITICAL THINKING: Ask yourself: Who benefits from this information being shared?"
+        ])
         
         return recommendations
 
@@ -510,24 +614,58 @@ class MisinformationAnalyzer:
         return 'high' if risk_score >= 2 else 'medium' if risk_score == 1 else 'low'
 
     def _generate_image_recommendations(self, risk_level: str) -> List[str]:
-        """Generate recommendations for image analysis"""
+        """Generate comprehensive recommendations for image analysis"""
+        recommendations = []
+        
         if risk_level == 'high':
-            return [
-                "⚠️ High risk of manipulation detected",
-                "Verify image authenticity through reverse image search",
-                "Check original source and publication date"
-            ]
+            recommendations.extend([
+                "🚨 CRITICAL: High probability of image manipulation or deepfake detected",
+                "🔍 IMMEDIATE ACTION: Perform reverse image search on Google, TinEye, and Yandex",
+                "📅 VERIFICATION: Check original publication date and source of the image",
+                "🔬 TECHNICAL ANALYSIS: Look for inconsistencies in lighting, shadows, and image quality",
+                "👥 EXPERT CONSULTATION: Consider consulting digital forensics experts for important cases",
+                "🚫 DO NOT SHARE: Avoid spreading potentially manipulated content",
+                "📱 REPORT: Consider reporting to platform moderators if used maliciously"
+            ])
         elif risk_level == 'medium':
-            return [
-                "⚡ Moderate risk detected",
-                "Exercise caution when sharing this image"
-            ]
+            recommendations.extend([
+                "⚠️ MODERATE RISK: Some indicators of potential manipulation detected",
+                "🔍 VERIFY FIRST: Use reverse image search to find original source",
+                "📊 CROSS-CHECK: Compare with other images from the same event or location",
+                "🕒 DATE CHECK: Verify when and where the image was originally taken",
+                "⏸️ PAUSE BEFORE SHARING: Take time to verify authenticity",
+                "🔎 EXAMINE DETAILS: Look closely for unnatural elements or inconsistencies"
+            ])
         else:
-            return ["✅ Image appears authentic based on analysis"]
+            recommendations.extend([
+                "✅ LOW RISK: Image appears authentic based on technical analysis",
+                "🔍 STILL VERIFY: Even authentic images can be used in wrong context",
+                "📅 CONTEXT CHECK: Ensure image matches claimed date, location, and event",
+                "📰 SOURCE VERIFICATION: Confirm the image comes from a credible source"
+            ])
+        
+        # Universal image verification recommendations
+        recommendations.extend([
+            "🔧 TECHNICAL TIPS: Check EXIF data for camera settings and location information",
+            "🌐 REVERSE SEARCH: Use Google Images, TinEye, or Yandex to find image origins",
+            "📱 MOBILE TOOLS: Use apps like FotoForensics or JPEGsnoop for deeper analysis",
+            "👁️ VISUAL INSPECTION: Look for blurred edges, unnatural skin textures, or lighting mismatches",
+            "🎯 FOCUS AREAS: Pay special attention to faces, hands, and background consistency",
+            "📚 LEARN MORE: Study common deepfake and manipulation techniques to improve detection skills"
+        ])
+        
+        return recommendations
 
     async def analyze_video_deepfake(self, video_path: str) -> Dict[str, Any]:
         """Analyze video for deepfake detection"""
         try:
+            # Get video properties first
+            cap = cv2.VideoCapture(video_path)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            duration = frame_count / fps if fps > 0 else 0
+            cap.release()
+            
             # Extract frames for analysis
             frames = self._extract_video_frames(video_path)
             if not frames:
@@ -535,9 +673,20 @@ class MisinformationAnalyzer:
             
             # Analyze sample frames
             frame_analyses = []
+            gemini_analyses = []
+            
             for i, frame_path in enumerate(frames[:5]):  # Analyze first 5 frames
                 analysis = await self.analyze_image_deepfake(frame_path)
                 frame_analyses.append(analysis)
+                
+                # Extract Gemini analysis for aggregation
+                if analysis.get('analysis', {}).get('gemini_analysis', {}).get('analysis'):
+                    gemini_analyses.append({
+                        'frame': i + 1,
+                        'analysis': analysis['analysis']['gemini_analysis']['analysis'],
+                        'verdict': analysis['analysis']['gemini_analysis'].get('deepfake_verdict', 'UNKNOWN'),
+                        'confidence': analysis['analysis']['gemini_analysis'].get('confidence', 0)
+                    })
                 
                 # Clean up frame file
                 try:
@@ -551,17 +700,58 @@ class MisinformationAnalyzer:
             medium_risk_count = risk_levels.count('medium')
             
             overall_risk = 'high' if high_risk_count >= 2 else 'medium' if medium_risk_count >= 3 else 'low'
+            deepfake_score = 0.8 if overall_risk == 'high' else 0.5 if overall_risk == 'medium' else 0.2
+            
+            # Create aggregated Gemini analysis
+            aggregated_gemini = None
+            if gemini_analyses:
+                # Combine all frame analyses
+                combined_analysis = "\n\n".join([
+                    f"Frame {ga['frame']}: {ga['analysis']}" for ga in gemini_analyses
+                ])
+                
+                # Calculate average confidence
+                avg_confidence = sum(ga['confidence'] for ga in gemini_analyses) / len(gemini_analyses)
+                
+                # Determine overall verdict
+                verdicts = [ga['verdict'] for ga in gemini_analyses]
+                verdict_counts = {}
+                for v in verdicts:
+                    verdict_counts[v] = verdict_counts.get(v, 0) + 1
+                overall_verdict = max(verdict_counts.items(), key=lambda x: x[1])[0]
+                
+                aggregated_gemini = {
+                    'status': 'success',
+                    'analysis': combined_analysis,
+                    'deepfake_verdict': overall_verdict,
+                    'confidence': int(avg_confidence)
+                }
             
             return {
                 'deepfake_risk': overall_risk,
+                'deepfake_score': deepfake_score,
+                'confidence': 0.85,
                 'frames_analyzed': len(frame_analyses),
                 'high_risk_frames': high_risk_count,
                 'medium_risk_frames': medium_risk_count,
                 'frame_analyses': frame_analyses,
+                'analysis': {
+                    'video_properties': {
+                        'duration': duration,
+                        'fps': fps,
+                        'frame_count': frame_count
+                    },
+                    'gemini_analysis': aggregated_gemini,
+                    'frame_analysis': {
+                        'frames_analyzed': len(frame_analyses),
+                        'high_risk_frames': high_risk_count,
+                        'medium_risk_frames': medium_risk_count
+                    }
+                },
                 'recommendations': self._generate_video_recommendations(overall_risk)
             }
         except Exception as e:
-            return {'error': str(e), 'deepfake_risk': 'unknown'}
+            return {'error': str(e), 'deepfake_risk': 'unknown', 'deepfake_score': 0.5, 'confidence': 0.1}
 
     def _extract_video_frames(self, video_path: str, max_frames: int = 5) -> List[str]:
         """Extract frames from video for analysis"""
@@ -569,14 +759,18 @@ class MisinformationAnalyzer:
             cap = cv2.VideoCapture(video_path)
             frames = []
             frame_count = 0
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            
+            # Calculate frame interval to get evenly distributed frames
+            interval = max(1, total_frames // (max_frames + 1)) if total_frames > max_frames else 1
             
             while cap.isOpened() and len(frames) < max_frames:
                 ret, frame = cap.read()
                 if not ret:
                     break
                 
-                # Save every 30th frame
-                if frame_count % 30 == 0:
+                # Save frames at calculated intervals
+                if frame_count % interval == 0:
                     frame_path = f"temp_frame_{len(frames)}_{os.getpid()}.jpg"
                     cv2.imwrite(frame_path, frame)
                     frames.append(frame_path)
@@ -590,17 +784,49 @@ class MisinformationAnalyzer:
             return []
 
     def _generate_video_recommendations(self, risk_level: str) -> List[str]:
-        """Generate recommendations for video analysis"""
+        """Generate comprehensive recommendations for video analysis"""
+        recommendations = []
+        
         if risk_level == 'high':
-            return [
-                "⚠️ High risk of deepfake detected",
-                "Verify video authenticity through multiple sources",
-                "Check for original publication and context"
-            ]
+            recommendations.extend([
+                "🚨 CRITICAL: High probability of deepfake or synthetic video detected",
+                "🎬 FRAME ANALYSIS: Multiple frames show signs of artificial generation or manipulation",
+                "🔍 IMMEDIATE VERIFICATION: Search for original video source across multiple platforms",
+                "👥 EXPERT REVIEW: Consider professional deepfake detection services for critical cases",
+                "🚫 DO NOT SHARE: Avoid spreading potentially synthetic content",
+                "📱 REPORT DEEPFAKE: Report to platform if used to spread misinformation or harm reputation",
+                "⚖️ LEGAL CONSIDERATION: Deepfakes may have legal implications - document evidence",
+                "🔬 TECHNICAL ANALYSIS: Look for temporal inconsistencies and unnatural facial movements"
+            ])
         elif risk_level == 'medium':
-            return [
-                "⚡ Moderate risk detected",
-                "Exercise caution when sharing this video"
-            ]
+            recommendations.extend([
+                "⚠️ MODERATE RISK: Some frames show potential manipulation indicators",
+                "🎥 DETAILED REVIEW: Watch video multiple times, focusing on facial expressions and lip-sync",
+                "🔍 SOURCE VERIFICATION: Find original publication and verify the context",
+                "📊 COMPARE VERSIONS: Look for other versions of the same video online",
+                "⏸️ PAUSE AND EXAMINE: Check individual frames for inconsistencies",
+                "🕒 TIMING VERIFICATION: Confirm the video matches claimed date and event",
+                "👁️ VISUAL CUES: Watch for unnatural blinking, facial expressions, or voice sync issues"
+            ])
         else:
-            return ["✅ Video appears authentic based on analysis"]
+            recommendations.extend([
+                "✅ LOW RISK: Video appears authentic based on frame-by-frame analysis",
+                "🔍 CONTEXT VERIFICATION: Ensure video context matches claims about when/where it was filmed",
+                "📰 SOURCE CHECK: Verify the video comes from a credible, original source",
+                "📅 DATE VERIFICATION: Confirm the video is recent and not recycled from past events"
+            ])
+        
+        # Universal video verification recommendations
+        recommendations.extend([
+            "🎬 TECHNICAL ANALYSIS: Check video metadata for creation date, device, and location",
+            "🔍 REVERSE VIDEO SEARCH: Use InVID or Google to find original video sources",
+            "👥 WITNESS VERIFICATION: Look for multiple independent sources filming the same event",
+            "🎯 FOCUS ON DETAILS: Pay attention to background consistency, lighting, and audio sync",
+            "📱 MOBILE VERIFICATION: Use apps like InVID WeVerify for comprehensive video analysis",
+            "🧠 BEHAVIORAL ANALYSIS: Watch for natural vs. artificial facial expressions and body language",
+            "🔊 AUDIO ANALYSIS: Check if voice matches speaker's known vocal patterns and characteristics",
+            "📚 EDUCATION: Learn about common deepfake artifacts like flickering, blurring, and temporal inconsistencies",
+            "⚡ QUICK CHECKS: Look for unnatural eye movements, inconsistent lighting, and facial boundary artifacts"
+        ])
+        
+        return recommendations

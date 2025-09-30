@@ -1202,37 +1202,46 @@ function displayTextResults(result) {
                 }
 
                 analysisHTML += `
-                    <div class="analysis-section">
-                        <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
-                        <div class="analysis-grid">
-                            <div class="analysis-item">
-                                <span>AI Verdict</span>
-                                <span class="badge ${verdictClass}">${verdict}</span>
+                    <div class="analysis-section" style="border: 2px solid var(--text-accent); background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);">
+                        <h4 style="color: var(--text-accent); font-size: 1.3rem; margin-bottom: 1.5rem;"><i class="fas fa-brain" style="color: #667eea;"></i> 🤖 Gemini AI Expert Analysis</h4>
+                        <div class="analysis-grid" style="margin-bottom: 2rem;">
+                            <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                                <span style="font-weight: 600; color: var(--text-secondary);">AI Verdict</span>
+                                <span class="badge ${verdictClass}" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">${verdict}</span>
                             </div>
-                            <div class="analysis-item">
-                                <span>AI Confidence</span>
-                                <span class="badge ${confidenceClass}">${confidence}%</span>
+                            <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                                <span style="font-weight: 600; color: var(--text-secondary);">AI Confidence</span>
+                                <span class="badge ${confidenceClass}" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">${confidence}%</span>
                             </div>
                         </div>
-                        <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 12px; border-left: 4px solid var(--text-accent);">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--text-accent); font-weight: 600;">
-                                <i class="fas fa-robot"></i>
-                                <span>Gemini AI Analysis</span>
+                        <div style="margin-top: 1.5rem; padding: 2rem; background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 100%); border: 2px solid #667eea; border-radius: 16px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; color: #667eea; font-weight: 700; font-size: 1.1rem;">
+                                <i class="fas fa-robot" style="font-size: 1.3rem;"></i>
+                                <span>🧠 Detailed AI Analysis</span>
                             </div>
-                            <div style="color: var(--text-primary); line-height: 1.6;">
-                                ${gemini.analysis ? gemini.analysis.replace(/\n/g, '<br>') : 'No detailed analysis available from AI model.'}
+                            <div style="color: #e2e8f0; line-height: 1.8; font-size: 1.05rem; background: rgba(102, 126, 234, 0.05); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #667eea;">
+                                ${gemini.analysis ? gemini.analysis.replace(/\n/g, '<br><br>') : 'No detailed analysis available from AI model.'}
                             </div>
                         </div>
                     </div>
                 `;
             } else {
                 analysisHTML += `
-                    <div class="analysis-section">
-                        <h4><i class="fas fa-brain"></i> AI Expert Analysis</h4>
+                    <div class="analysis-section" style="border: 2px solid #e53e3e; background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);">
+                        <h4 style="color: #e53e3e; font-size: 1.3rem; margin-bottom: 1.5rem;"><i class="fas fa-brain" style="color: #e53e3e;"></i> ⚠️ AI Expert Analysis</h4>
                         <div class="analysis-grid">
-                            <div class="analysis-item">
-                                <span>Status:</span>
-                                <span class="badge error">Not Available</span>
+                            <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                                <span style="font-weight: 600; color: var(--text-secondary);">Status:</span>
+                                <span class="badge error" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">Not Available</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem; padding: 2rem; background: linear-gradient(135deg, #3a1a1a 0%, #612d2d 100%); border: 2px solid #e53e3e; border-radius: 16px;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; color: #e53e3e; font-weight: 700; font-size: 1.1rem;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 1.3rem;"></i>
+                                <span>AI Analysis Unavailable</span>
+                            </div>
+                            <div style="color: #f7fafc; line-height: 1.6; font-size: 1.05rem;">
+                                Gemini AI analysis is currently unavailable. Please check your API configuration and try again.
                             </div>
                         </div>
                     </div>
@@ -1301,7 +1310,7 @@ function displayTextResults(result) {
                     <div class="analysis-grid">
                         <div class="analysis-item">
                             <span>Verification Status</span>
-                            <span class="badge ${fact.status === 'success' ? 'success' : 'error'}">${fact.status ? fact.status.toUpperCase() : 'PENDING'}</span>
+                            <span class="badge ${fact.error ? 'error' : (fact.claims_found > 0 ? 'success' : 'moderate')}">${fact.error ? 'API ERROR' : (fact.claims_found > 0 ? 'COMPLETED' : 'NO CLAIMS FOUND')}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Verifiable Claims Found</span>
@@ -1309,7 +1318,7 @@ function displayTextResults(result) {
                         </div>
                         <div class="analysis-item">
                             <span>Professional Fact-Checks Available</span>
-                            <span style="font-weight: 600; color: ${fact.has_fact_checks ? 'var(--text-primary)' : 'var(--text-muted)'};">${fact.has_fact_checks ? 'Yes' : 'No'}</span>
+                            <span style="font-weight: 600; color: ${fact.claims_found > 0 ? 'var(--text-primary)' : 'var(--text-muted)'};">${fact.claims_found > 0 ? 'Yes' : 'No'}</span>
                         </div>
                     </div>
                 </div>
@@ -1325,7 +1334,7 @@ function displayTextResults(result) {
                     <div class="analysis-grid">
                         <div class="analysis-item">
                             <span>Verification Status</span>
-                            <span class="badge ${news.status === 'success' ? 'success' : 'error'}">${news.status ? news.status.toUpperCase() : 'PENDING'}</span>
+                            <span class="badge ${news.error ? 'error' : (news.articles_found > 0 ? 'success' : 'moderate')}">${news.error ? 'API ERROR' : (news.articles_found > 0 ? 'COMPLETED' : 'NO ARTICLES FOUND')}</span>
                         </div>
                         <div class="analysis-item">
                             <span>Related Articles Found</span>
@@ -1463,9 +1472,11 @@ function displayImageResults(result) {
     // Analysis details for image
     let analysisHTML = '';
     
-    // Check for Gemini analysis in the correct location
+    // Always show Gemini analysis section for images
     const geminiAnalysis = result.analysis?.gemini_analysis;
-    if (geminiAnalysis && geminiAnalysis.analysis) {
+    console.log('Gemini analysis data:', geminiAnalysis);
+    
+    if (geminiAnalysis && geminiAnalysis.status === 'success' && geminiAnalysis.analysis) {
         const verdict = geminiAnalysis.deepfake_verdict || 'UNKNOWN';
         const confidence = geminiAnalysis.confidence || 0;
         
@@ -1480,25 +1491,50 @@ function displayImageResults(result) {
         }
         
         analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-brain"></i> AI Image Analysis</h4>
-                <div class="analysis-grid">
-                    <div class="analysis-item">
-                        <span>AI Verdict</span>
-                        <span class="badge ${verdictClass}">${verdict}</span>
+            <div class="analysis-section" style="border: 2px solid var(--text-accent); background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);">
+                <h4 style="color: var(--text-accent); font-size: 1.3rem; margin-bottom: 1.5rem;"><i class="fas fa-brain" style="color: #667eea;"></i> Gemini AI Image Analysis</h4>
+                <div class="analysis-grid" style="margin-bottom: 2rem;">
+                    <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                        <span style="font-weight: 600; color: var(--text-secondary);">AI Verdict</span>
+                        <span class="badge ${verdictClass}" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">${verdict}</span>
                     </div>
-                    <div class="analysis-item">
-                        <span>AI Confidence</span>
-                        <span class="badge ${confidence >= 80 ? 'success' : confidence >= 60 ? 'moderate' : 'error'}">${confidence}%</span>
+                    <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                        <span style="font-weight: 600; color: var(--text-secondary);">AI Confidence</span>
+                        <span class="badge ${confidence >= 80 ? 'success' : confidence >= 60 ? 'moderate' : 'error'}" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">${confidence}%</span>
                     </div>
                 </div>
-                <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 12px; border-left: 4px solid var(--text-accent);">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--text-accent); font-weight: 600;">
-                        <i class="fas fa-robot"></i>
-                        <span>Gemini AI Image Analysis</span>
+                <div style="margin-top: 1.5rem; padding: 2rem; background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 100%); border: 2px solid #667eea; border-radius: 16px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; color: #667eea; font-weight: 700; font-size: 1.1rem;">
+                        <i class="fas fa-robot" style="font-size: 1.3rem;"></i>
+                        <span>Detailed Visual Analysis</span>
                     </div>
-                    <div style="color: var(--text-primary); line-height: 1.6;">
-                        ${geminiAnalysis.analysis.replace(/\n/g, '<br>')}
+                    <div style="color: #e2e8f0; line-height: 1.8; font-size: 1.05rem; background: rgba(102, 126, 234, 0.05); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #667eea;">
+                        ${geminiAnalysis.analysis.replace(/\n/g, '<br><br>')}
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Show error or unavailable status
+        const errorMsg = geminiAnalysis?.error || 'Gemini AI analysis unavailable';
+        const statusColor = geminiAnalysis?.status === 'error' ? '#e53e3e' : '#f6ad55';
+        
+        analysisHTML += `
+            <div class="analysis-section" style="border: 2px solid ${statusColor}; background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);">
+                <h4 style="color: ${statusColor}; font-size: 1.3rem; margin-bottom: 1.5rem;"><i class="fas fa-brain" style="color: ${statusColor};"></i> Gemini AI Image Analysis</h4>
+                <div class="analysis-grid" style="margin-bottom: 2rem;">
+                    <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                        <span style="font-weight: 600; color: var(--text-secondary);">Status</span>
+                        <span class="badge error" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">Not Available</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; padding: 2rem; background: linear-gradient(135deg, #3a1a1a 0%, #612d2d 100%); border: 2px solid ${statusColor}; border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; color: ${statusColor}; font-weight: 700; font-size: 1.1rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.3rem;"></i>
+                        <span>Analysis Status</span>
+                    </div>
+                    <div style="color: #f7fafc; line-height: 1.6; font-size: 1.05rem;">
+                        ${errorMsg}
                     </div>
                 </div>
             </div>
@@ -1677,25 +1713,25 @@ function displayVideoResults(result) {
     if ((geminiAnalysis && geminiAnalysis.analysis) || aggregatedGeminiText) {
         const fullText = geminiAnalysis?.analysis || aggregatedGeminiText;
         analysisHTML += `
-            <div class="analysis-section">
-                <h4><i class="fas fa-brain"></i> AI Video Analysis</h4>
-                <div class="analysis-grid">
-                    <div class="analysis-item">
-                        <span>AI Verdict</span>
-                        <span class="badge ${verdictClass}">${verdict}</span>
+            <div class="analysis-section" style="border: 2px solid var(--text-accent); background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);">
+                <h4 style="color: var(--text-accent); font-size: 1.3rem; margin-bottom: 1.5rem;"><i class="fas fa-brain" style="color: #667eea;"></i> 🎬 Gemini AI Video Analysis</h4>
+                <div class="analysis-grid" style="margin-bottom: 2rem;">
+                    <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                        <span style="font-weight: 600; color: var(--text-secondary);">AI Verdict</span>
+                        <span class="badge ${verdictClass}" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">${verdict}</span>
                     </div>
-                    <div class="analysis-item">
-                        <span>AI Confidence</span>
-                        <span class="badge ${confidence >= 80 ? 'success' : confidence >= 60 ? 'moderate' : 'error'}">${confidence}%</span>
+                    <div class="analysis-item" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary);">
+                        <span style="font-weight: 600; color: var(--text-secondary);">AI Confidence</span>
+                        <span class="badge ${confidence >= 80 ? 'success' : confidence >= 60 ? 'moderate' : 'error'}" style="font-size: 1.1rem; font-weight: 700; padding: 0.5rem 1rem;">${confidence}%</span>
                     </div>
                 </div>
-                <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 12px; border-left: 4px solid var(--text-accent);">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--text-accent); font-weight: 600;">
-                        <i class="fas fa-robot"></i>
-                        <span>Gemini AI Video Analysis</span>
+                <div style="margin-top: 1.5rem; padding: 2rem; background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 100%); border: 2px solid #667eea; border-radius: 16px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; color: #667eea; font-weight: 700; font-size: 1.1rem;">
+                        <i class="fas fa-robot" style="font-size: 1.3rem;"></i>
+                        <span>🎥 Frame-by-Frame Analysis</span>
                     </div>
-                    <div style="color: var(--text-primary); line-height: 1.6; white-space: normal;">
-                        ${String(fullText).replace(/\n/g, '<br>')}
+                    <div style="color: #e2e8f0; line-height: 1.8; font-size: 1.05rem; background: rgba(102, 126, 234, 0.05); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #667eea; white-space: normal;">
+                        ${String(fullText).replace(/\n/g, '<br><br>')}
                     </div>
                 </div>
             </div>

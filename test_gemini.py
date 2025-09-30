@@ -1,26 +1,44 @@
 import google.generativeai as genai
 import os
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 
-# Load environment variables
-env_path = os.path.join(os.getcwd(), ".env")
-if os.path.exists(env_path):
-    values = dotenv_values(env_path)
-    for key, value in values.items():
-        if value is not None:
-            os.environ[key] = str(value)
+load_dotenv()
 
-# Test Gemini API
-api_key = os.getenv('GEMINI_API_KEY')
-print(f"API Key: {api_key}")
-
-try:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.5-flash')
+def test_gemini_models():
+    """Test available Gemini models"""
+    api_key = os.getenv('GEMINI_API_KEY')
     
-    response = model.generate_content("Hello, can you respond with 'API is working'?")
-    print(f"Response: {response.text}")
-    print("✅ Gemini API is working!")
+    if not api_key:
+        print("GEMINI_API_KEY not found")
+        return
     
-except Exception as e:
-    print(f"❌ Error: {e}")
+    try:
+        genai.configure(api_key=api_key)
+        
+        # List available models
+        print("Available Gemini models:")
+        for model in genai.list_models():
+            if 'generateContent' in model.supported_generation_methods:
+                print(f"- {model.name}")
+        
+        # Test specific models
+        models_to_test = [
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-pro',
+            'gemini-pro-vision'
+        ]
+        
+        for model_name in models_to_test:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content("Hello")
+                print(f"✓ {model_name}: Working")
+            except Exception as e:
+                print(f"✗ {model_name}: {e}")
+                
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    test_gemini_models()
