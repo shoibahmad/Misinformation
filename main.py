@@ -270,7 +270,7 @@ async def debug_info():
 
 if __name__ == "__main__":
     import uvicorn
-    PORT = 8080  # Changed to 8080 to avoid conflicts
+    PORT = 8000
     print("Starting TruthGuard AI Detector...")
     print("=" * 60)
     print(f"Main Application: http://localhost:{PORT}")

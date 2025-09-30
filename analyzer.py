@@ -278,28 +278,41 @@ class MisinformationAnalyzer:
             else:
                 query = text
             
-            url = f"https://factchecktools.googleapis.com/v1alpha1/claims:search"
+            # Updated API endpoint URL
+            url = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
             params = {
                 'key': self.factcheck_api_key,
                 'query': query,
-                'languageCode': 'en'
+                'languageCode': 'en',
+                'pageSize': 5
             }
             
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params, timeout=10) as response:
+                async with session.get(url, params=params, timeout=15) as response:
+                    response_text = await response.text()
+                    
                     if response.status == 200:
-                        data = await response.json()
-                        claims = data.get('claims', [])
-                        
-                        return {
-                            'claims_found': len(claims),
-                            'claims': claims[:3],  # Top 3 claims
-                            'status': 'success'
-                        }
+                        try:
+                            data = await response.json()
+                            claims = data.get('claims', [])
+                            
+                            return {
+                                'claims_found': len(claims),
+                                'claims': claims[:3],  # Top 3 claims
+                                'status': 'success'
+                            }
+                        except Exception as json_error:
+                            return {'error': f'JSON parse error: {str(json_error)}', 'claims_found': 0}
+                    elif response.status == 403:
+                        return {'error': 'API key invalid or quota exceeded', 'claims_found': 0}
+                    elif response.status == 400:
+                        return {'error': 'Invalid request parameters', 'claims_found': 0}
                     else:
-                        return {'error': f'API error: {response.status}', 'claims_found': 0}
+                        return {'error': f'API error {response.status}: {response_text[:200]}', 'claims_found': 0}
+        except asyncio.TimeoutError:
+            return {'error': 'Request timeout', 'claims_found': 0}
         except Exception as e:
-            return {'error': str(e), 'claims_found': 0}
+            return {'error': f'Connection error: {str(e)}', 'claims_found': 0}
 
     async def _verify_with_news_apis(self, text: str) -> Dict[str, Any]:
         """Verify information using NewsAPI"""
